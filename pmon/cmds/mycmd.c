@@ -1132,6 +1132,7 @@ static int cmd_ifconfig(int argc,char **argv)
 		perror("ifconfig: socket");
 		return -1;
 	}
+	//printf("2022-03-04 cmd_ifconfig\n");	
 	ifra=(void *)&data;
 	ifr=(void *)&data;
 	bzero (ifra, sizeof(*ifra));

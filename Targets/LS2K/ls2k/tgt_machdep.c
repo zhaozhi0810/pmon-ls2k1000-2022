@@ -126,7 +126,7 @@ extern void *memset(void *, int, size_t);
 
 int kbd_available;
 int bios_available;
-int usb_kbd_available;;
+int usb_kbd_available;
 int vga_available;
 int cmd_main_mutex = 0;
 int bios_mutex = 0;
@@ -198,11 +198,31 @@ extern char ls2k_version();
 extern void slt_test();
 #endif
 
+static void ls2k_pwm(int index, int x,int y)
+{
+	if(index == 0)
+	{
+		readl(LS2K_PWM0_CTRL) &= ~1;
+		outl(LS2K_PWM0_LOW,x);
+		outl(LS2K_PWM0_FULL,y);
+		readl(LS2K_PWM0_CTRL) |= 1;		
+	}
+	else
+	{
+		readl(LS2K_PWM1_CTRL) &= ~1;
+		outl(LS2K_PWM1_LOW,x);
+		outl(LS2K_PWM1_FULL,y);
+		readl(LS2K_PWM1_CTRL) |= 1;
+	}
+}
+
+
 void initmips(unsigned long long  raw_memsz)
 {
 	unsigned int hi;
 	unsigned long long memsz;
 	unsigned short i;
+//	char cmd[200];
 	//core1 run wait_for_smp_call function in ram
 	asm volatile(".set mips64;sd %1,(%0);.set mips0;"::"r"(0xbfe11120),"r"(&wait_for_smp_call));
 	tgt_fpuenable();
@@ -219,7 +239,10 @@ void initmips(unsigned long long  raw_memsz)
 
 	tgt_cpufreq();
 	SBD_DISPLAY("DONE", 0);
-
+	
+	ls2k_pwm(0, 50000,100000);
+	ls2k_pwm(1, 41732,50000);
+	
 	cpuinfotab[0] = &DBGREG;
 	/*
 	 *  Init PMON and debug
@@ -241,11 +264,18 @@ void initmips(unsigned long long  raw_memsz)
 			MipsExceptionEnd - MipsException);
 	SBD_DISPLAY("BEV0", 0);
 	printf("BEV in SR set to zero.\n");
-	ls2k_nand_init();
+//	ls2k_nand_init();
 #ifdef DTB
 	verify_dtb();
 #endif
 
+//	printf("ifconfig syn0 192.168.1.45 up\n");
+//	sprintf(cmd,"ifconfig syn0 192.168.1.45 up");
+//	do_cmd(cmd);
+//	printf("ifconfig syn1 192.168.0.45 up\n");
+//	sprintf(cmd,"ifconfig syn1 192.168.0.45 up");
+//	do_cmd(cmd);
+	
 	/*
 	 * Launch!
 	 */
@@ -299,9 +329,9 @@ static void init_pcidev(void)
 			fbaddress = dc_init();
 			printf("dc_init done\n");
 			//this parameters for 1280*1024 VGA
-			ScreenLineLength = 2560;
+			ScreenLineLength = FB_XSIZE*2/*2560*/;
 			ScreenDepth = 15;
-			ScreenHeight = 1024;
+			ScreenHeight = FB_YSIZE/*800*/;
 		} else {
 			fbaddress  = _pci_conf_read(pcie_dev->pa.pa_tag,0x10);
 			fbaddress = fbaddress &0xffffff00; //laster 8 bit
@@ -322,6 +352,9 @@ static void init_pcidev(void)
 		else
 			vga_available = 0;
 #endif
+
+	
+
 
 	return;
 }

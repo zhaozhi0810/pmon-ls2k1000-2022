@@ -46,27 +46,27 @@
 const Cmd *CmdList[100];
 
 void
-cmdlist_expand(newcmdlist, atend)
+cmdlist_expand(newcmdlist, atend)     //参数是一个列表
 	const Cmd *newcmdlist;
 	int atend;
 {
 	int i;
 
 	for(i = 0; i < 100; i++) {
-		if(CmdList[i] == 0) {
-			CmdList[i] = newcmdlist;
+		if(CmdList[i] == 0) {  //找到一个空位
+			CmdList[i] = newcmdlist;   //CmdList存放的是列表，而不是命令的地址
 			return;
 		}
-
+		//列表已经存在（名字相同），跳出循环
 		if (!strcmp(newcmdlist->name, CmdList[i]->name)) {
 			break;
 		}
 	}
-	if(atend) {
+	if(atend) {   //放在重名列表的后面
 		while(CmdList[i] && !strcmp(newcmdlist->name,CmdList[i]->name)) {
 			i++;
 		}
 	}
-	bcopy((void *)&CmdList[i], (void *)&CmdList[i+1], sizeof(Cmd *) *(99 - i));
-	CmdList[i] = newcmdlist;
+	bcopy((void *)&CmdList[i], (void *)&CmdList[i+1], sizeof(Cmd *) *(99 - i));   //向后移动，空出CmdList[i]这个空间
+	CmdList[i] = newcmdlist;   //填充CmdList[i]空间
 }

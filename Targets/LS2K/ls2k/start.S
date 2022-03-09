@@ -979,6 +979,11 @@ start_now:
 
 1:
 
+#ifdef  AUTO_DDR_CONFIG
+TTYDBG ("\r\nDEFINE  AUTO_DDR_CONFIG\r\n")
+#else
+TTYDBG ("\r\nNOT DEFINE  AUTO_DDR_CONFIG\r\n")
+#endif
 
 
         mfc0	a0, COP_0_CONFIG		/* enable kseg0 cachability */
@@ -1040,8 +1045,8 @@ start_now:
 //#define DEBUG_AUTO_ARB_LEVEL
 #endif
 //#define  DISABLE_DDR_A15
-//#define DEBUG_DDR
-//#define DEBUG_DDR_PARAM
+#define DEBUG_DDR
+#define DEBUG_DDR_PARAM
 //#define PRINT_DDR_LEVELING
 //#define DLL_DELAY_LOOP
 //#define NO_AUTO_TRFC   //adjust TRFC param manually if defined
@@ -1056,7 +1061,41 @@ start_now:
     dli     s1, 0xff100004  //set use MC1 or MC0 or MC1/0 and give All device id
 #else
 	//dli     s1, 0xc2e30400c2e30404
-	dli     s1, 0xc1a10404
+//	dli     s1, 0xc1a10404
+
+#if 0
+    //set MC1 dimm infor
+    dli     a0, ( MC_SDRAM_TYPE_DDR3    /* sdram type: DDR3/DDR2 */ \
+                | MC_DIMM_ECC_NO        /* dimm ECC: YES/NO */ \
+                | MC_DIMM_BUF_REG_NO    /* dimm buffer register: YES/NO, for RDIMM use YES, all else use NO*/ \
+                | MC_DIMM_WIDTH_64      /* memory data width: 64/32 */ \
+                | MC_SDRAM_ROW_16       /* sdram row address number: 15~11 */ \
+                | MC_SDRAM_COL_10       /* sdram column address number: 12~9 */ \
+                | MC_SDRAM_BANK_8       /* sdram bank number: 8/4 */ \
+                | MC_ADDR_MIRROR_NO    /* for standard DDR3 UDIMM, use YES else use NO */ \
+                | MC_SDRAM_WIDTH_X16    /* SDRAM device data width: 8/16 */ \
+                | MC_USE_CS_0         /* the CS pins the sdram connected on(split by '_', from small to big) */ \
+                | MC_MEMSIZE_(8)        /* MC memory size, unit: 512MB */ \
+                )
+    dsll    s1, a0, 32
+#endif	
+    //set MC0 dimm infor
+    dli     a0, ( MC_SDRAM_TYPE_DDR3    /* sdram type: DDR3/DDR2 */ \
+                | MC_DIMM_ECC_NO        /* dimm ECC: YES/NO */ \
+                | MC_DIMM_BUF_REG_NO    /* dimm buffer register: YES/NO, for RDIMM use YES, all else use NO*/ \
+                | MC_DIMM_WIDTH_64      /* memory data width: 64/32 */ \
+                | MC_SDRAM_ROW_16       /* sdram row address number: 15~11 */ \
+                | MC_SDRAM_COL_10       /* sdram column address number: 12~9 */ \
+                | MC_SDRAM_BANK_8       /* sdram bank number: 8/4 */ \
+                | MC_ADDR_MIRROR_NO    /* for standard DDR3 UDIMM, use YES, else use NO */ \
+                | MC_SDRAM_WIDTH_X16    /* SDRAM device data width: 8/16 */ \
+                | MC_USE_CS_0         /* the CS pins the sdram connected on(split by '_', from small to big) */ \
+                | MC_MEMSIZE_(8)        /* MC memory size, unit: 512MB */ \
+                )
+    or      s1, s1, a0
+    //set used MC and NODE ID
+    or      s1, s1, USE_MC_0          /* used memory controller: _0/_1/_0_1 */
+    or      s1, s1, MC_NODE_ID_0        /* node ID: 0/1/2/3 */
 #endif
 #include "ddr_dir/loongson3_ddr2_config.S"
 

@@ -85,7 +85,7 @@
 #include "usb.h"
 
 #undef USB_DEBUG
-#define USB_DEBUG
+//#define USB_DEBUG /* modify by lifeng */
 
 #ifdef	USB_DEBUG
 #define	USB_PRINTF(fmt,args...)	printf (fmt ,##args)

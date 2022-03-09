@@ -165,7 +165,7 @@ static int load_menu_list()
        //try to read boot.cfg from USB disk first
         for (dev  = TAILQ_FIRST(&alldevs); dev != NULL; dev = next_dev) {
                 next_dev = TAILQ_NEXT(dev, dv_list);
-                if(dev->dv_class < DV_DISK) {
+                if(dev->dv_class != DV_DISK) {
                         continue;
                 }
 
@@ -175,11 +175,11 @@ static int load_menu_list()
                         if (retid == 0) {
                                 return 1;
                         }
-                        sprintf(load, "bl -d ide /dev/fs/ext2@%s/boot.cfg", dev->dv_xname);
+					    sprintf(load, "bl -d ide /dev/fs/ext2@%s/boot.cfg", dev->dv_xname);
                         retid = do_cmd(load);
                         if (retid == 0) {
                                 return 1;
-                        }
+                        }						
                         sprintf(load, "bl -d ide /dev/fs/fat@%s/boot/boot.cfg", dev->dv_xname);
                         retid = do_cmd(load);
                         if (retid == 0) {
@@ -206,7 +206,7 @@ static int load_menu_list()
         //try to read boot.cfg from CD-ROM disk second
         for (dev  = TAILQ_FIRST(&alldevs); dev != NULL; dev = next_dev) {
                 next_dev = TAILQ_NEXT(dev, dv_list);
-                if(dev->dv_class < DV_DISK) {
+                if(dev->dv_class != DV_DISK) {
                         continue;
                 }
 
@@ -225,10 +225,12 @@ static int load_menu_list()
         }
 
         //try to read boot.cfg from sata disk third
-	sprintf(path, "%s/boot/boot.cfg", rootdev);
+	/* modify by lifeng */
+	/*sprintf(path, "%s/boot/boot.cfg", rootdev);*/
+	sprintf(path, "%s/boot.cfg", rootdev);
 	if (check_config(path) == 1)
 	{
-		sprintf(path, "bl -d ide %s/boot/boot.cfg", rootdev);
+		sprintf(path, "bl -d ide %s/boot.cfg", rootdev);
 		if (do_cmd(path) == 0)
 		{
 			show_menu = 0;
@@ -239,10 +241,11 @@ static int load_menu_list()
 		
 	}else{
 
-			sprintf(path, "%s/boot.cfg", rootdev);
+			/*sprintf(path, "%s/boot.cfg", rootdev);*/
+			sprintf(path, "%s/boot/boot.cfg", rootdev);
 			if (check_config(path) == 1)
 			{
-				sprintf(path, "bl -d ide %s/boot.cfg", rootdev);
+				sprintf(path, "bl -d ide %s/boot/boot.cfg", rootdev);
 				if (do_cmd(path) == 0)
 				{
 					show_menu = 0;
@@ -519,8 +522,11 @@ main()
 				setenv("append","console=tty root=/dev/sda1");
 			}
 			if (getenv("al1") == NULL) { /* HARDDISK autoload */
-				setenv("al1","/dev/fs/ext2@wd0/boot/vmlinux");
-				setenv("append","console=tty root=/dev/sda1");
+				/* modify by lifeng */
+				/*setenv("al1","/dev/fs/ext2@wd0/boot/vmlinux");*/
+				/*setenv("append","console=tty root=/dev/sda1");*/
+				setenv("al1","/dev/fs/ext2@wd0/vmlinux");
+				setenv("append","console=ttyS0,115200 root=/dev/sda2 rw quiet splash autoplug=off loglevel=7");
 			}
 
 			//autoload("/dev/fs/ext2@wd0/boot/vmlinux");
@@ -584,7 +590,7 @@ main()
 	return(0);
 }
 
-#ifdef AUTOLOAD
+#ifdef AUTOLOAD   //已定义，2022-02-28，执行该函数
 static int autoload(char *s)
 {
 	char buf[LINESZ];
@@ -660,7 +666,7 @@ static int autoload(char *s)
 			//strcat(buf," console=tty");
 			strcat(buf," console=ttyS0,115200 init=/bin/sh rw");
 			}
-			printf("%s\n",buf);
+			printf("2022-02-28 do-cmd %s\n",buf);
 			delay(100000);
 			ret = do_cmd (buf);
 		}
@@ -686,7 +692,7 @@ autorun(char *s)
 	unsigned int dly, lastt;
 	unsigned int cnt;
 	struct termio sav;
-
+	
 	if(s != NULL  && strlen(s) != 0) {
 		d = getenv ("bootdelay");
 		if(!d || !atob (&dly, d, 10) || dly < 0 || dly > 99) {
@@ -886,16 +892,21 @@ dbginit (char *adr)
 	printf ("Memory size %lld MB .\n", memorysize_total);
 
 	tgt_memprint();
+//	printf("line %s\n",__LINE__);
 #if defined(SMP)
 	tgt_smpstartup();
 #endif
+//	printf("line %s\n",__LINE__);
 
 	printf ("\n");
 	loongson_smbios_init();	
+//	printf("line %s\n",__LINE__);
 	md_clreg(NULL);
 	md_setpc(NULL, (int32_t) CLIENTPC);
 	md_setsp(NULL, tgt_clienttos ());
+//	printf("line %s\n",__LINE__);
 	DevicesInit();
+//	printf("line %s\n",__LINE__);
 }
 
 /*

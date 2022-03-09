@@ -81,10 +81,13 @@ int boot_kernel(const char* path, int flags, void* flashaddr, unsigned int offse
 #endif
 	dl_initialise (offset, flags);
 
-	fprintf (stderr, "Loading file: %s ", path);
+	fprintf (stderr, "Loading file33333333333: %s ", path);
 	errno = 0;
 	n = 0;
-
+	
+	printf("set gpio 53 low \n");
+	*(volatile unsigned int *)0xbfe10514 &= ~0x00200000; //low:53
+	
 	if (flags & RFLAG) {
 	   ExecId id;
 

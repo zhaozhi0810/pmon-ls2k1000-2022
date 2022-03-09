@@ -227,7 +227,7 @@ void dumpphyregg(synopGMACdevice *gmacdev)
 	u16 data;
 	for(i = 0; i <= 31; i++){
 		synopGMAC_read_phy_reg(gmacdev->MacBase,gmacdev->PhyBase,i,&data);
-		printf("PHY REG 0x%x  value:%x", i, data);
+		printf("PHY REG 0x%x value:%x ", i, data);
 	}
 	printf("\n");
 
@@ -429,7 +429,6 @@ else{
 	if(!gmacdev->LinkState){
 		status = synopGMAC_check_phy_init(gmacdev);
 		synopGMAC_mac_init(gmacdev);
-
 	}
 }
 	
@@ -1424,7 +1423,7 @@ unsigned long synopGMAC_linux_open(struct synopGMACNetworkAdapter *tp)
 	struct synopGMACNetworkAdapter *adapter = tp;
         synopGMACdevice * gmacdev;
 	struct PmonInet * PInetdev;
-	TR0("%s called \n",__FUNCTION__);
+	TR("%s called \n",__FUNCTION__);
 	adapter = tp;
 	gmacdev = (synopGMACdevice *)adapter->synopGMACdev;
 	PInetdev = (struct PmonInet *)adapter->PInetdev;
@@ -2035,6 +2034,7 @@ int init_phy(struct synopGMACdevice *gmacdev)
 	synopGMAC_read_phy_reg(gmacdev->MacBase,gmacdev->PhyBase,3,&data3);
     //printf("============== phy device ID is: %x\n", data2);
     //printf("============== phy vendor ID is: %x\n", data3);
+
 	if(data2 == 0x141 && ((data3 >> 10) == 0x3)){ //marvel ethernet phy
         if(((data3 >> 4) & 0x3f) == 0x0C){  //88E11
 	        /*set 88e1111 clock phase delay*/
@@ -2250,7 +2250,7 @@ static int gmac_ether_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 			ifp->if_flags |= IFF_UP;
 #ifdef __OpenBSD__
 			arp_ifinit(&(adapter->PInetdev->arpcom), ifa);
-			printf("==arp_ifinit done\n");
+//			printf("==arp_ifinit done\n");
 #else
 			arp_ifinit(ifp, ifa);
 #endif
@@ -2272,7 +2272,7 @@ static int gmac_ether_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
 		 * such as IFF_PROMISC are handled.
 		 */
 
-		printf("===ioctl sifflags\n");
+//		printf("===ioctl sifflags\n");
 		if(ifp->if_flags & IFF_UP){
 			synopGMAC_linux_open(adapter);
 		}
@@ -2301,7 +2301,7 @@ static int gmac_ether_ioctl(struct ifnet *ifp, unsigned long cmd, caddr_t data)
                 break;
 */
 	default:
-		printf("===ioctl default\n");
+//		printf("===ioctl default\n");
 		dumpreg(regbase);
 		error = EINVAL;
 	}

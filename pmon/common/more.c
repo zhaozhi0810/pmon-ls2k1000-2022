@@ -80,26 +80,28 @@ more (p, cnt, size)
     int             r;
 
     if (*cnt == 0) {
-	if (size == 0)
-	    return (1);		/* if cnt=0 and size=0 we're done */
-	while ((r = getinp (cnt, size)) == -1);
-	if (r) {		/* quit */
-	    *p = 0;
-	    return (1);
-	}
+		if (size == 0)
+		    return (1);		/* if cnt=0 and size=0 we're done */
+
+		while ((r = getinp (cnt, size)) == -1);   //直到返回值不等于-1为止
+
+		if (r) {		/* quit */  //r不等于0就退出了
+		    *p = 0;
+		    return (1);
+		}
     }
     if (*cnt == -1) {		/* search in progress */
-	if (!strposn (p, more_pat)) {
-	    dotik (256, 0);
-	    return (0);		/* not found yet */
-	} else {		/* found */
-	    *cnt = size;
-	    printf ("\b \n");
-	}
+		if (!strposn (p, more_pat)) { //在p中找q，没找到返回0
+		    dotik (256, 0);
+		    return (0);		/* not found yet */
+		} else {		/* found */
+		    *cnt = size;  //找到了，修改了cnt的值
+		    printf ("\b \n");
+		}
     }
-    printf ("%s\n", p);
+    printf ("%s\n", p);   //打印传进来的值
     *p = 0;
-    (*cnt)--;
+    (*cnt)--;   //修改了cnt的值
     return (0);
 }
 
@@ -116,46 +118,46 @@ getinp (cnt, size)
     printf ("%s", more_msg);
     for(;;) {
 	c = getchar ();
-	if (strchr ("nq/ \n", c))
+	if (strchr ("nq/ \n", c))    //输入的字符是n q / 空格 回车这5种的一个吗？
 	    break;
 	putchar (BEL);
     }
     s = more_msg;
     while(*s++) {
-	printf("\b \b");
+	printf("\b \b");   //回退，把more... 消去
     }
-    if (c == 'q')
-	return (1);
+    if (c == 'q')  //如果是退出，返回1
+		return (1);
     switch (c) {
-    case ' ':
-	*cnt = size;
+    case ' ':       //如果输入是空格
+		*cnt = size;
 	break;
-    case '\n':
-	*cnt = 1;
+    case '\n':     //如果是回车
+		*cnt = 1;
 	break;
-    case '/':
+    case '/':   //如果是右斜线
 	/* get pattern */
-	putchar ('/');
+		putchar ('/');
 	for (i = 0;;) {
 	    c = getchar ();
 	    if (c == '\n')
-		break;
+			break;
 	    if (c == '\b') {
-		if (i > 0) {
-		    putchar (c);
-		    i--;
-		} else {
-		    putchar ('\b');
-		    return (-1);
-		}
-	    } else {
+			if (i > 0) {
+			    putchar (c);
+			    i--;
+			} else {
+			    putchar ('\b');
+			    return (-1);
+			}
+	    } else { //不是退格键的情况下，把数据存起来，
 		putchar (c);
-		more_pat[i++] = c;
+		more_pat[i++] = c;  //保存到数组中
 	    }
 	}
-	more_pat[i] = 0;
+	more_pat[i] = 0;  //末尾加上结束标志
 	printf ("  ");
-	*cnt = -1;		/* enter search mode */
+	*cnt = -1;		/* enter search mode */   //进入查找模式
 	break;
     case 'n':
 	printf ("/%s  ", more_pat);

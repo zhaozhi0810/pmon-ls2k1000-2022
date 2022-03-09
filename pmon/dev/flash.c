@@ -240,16 +240,16 @@ fl_reset(struct fl_map *map)
  *  Find what flash map address nelongs to.
  */
 struct fl_map *
-fl_find_map(void *base)
+fl_find_map(void *base)   //参数正好是0xbfc00000
 {
 	struct fl_map *map;
 	for(map = tgt_flashmap(); map->fl_map_size != 0; map++) {
-		if(map->fl_map_base > (u_int32_t)base ||
-		   (map->fl_map_base + map->fl_map_size - 1) < (u_int32_t)base) {
+		if(map->fl_map_base > (u_int32_t)base ||   //第一项正好相等，不大于
+		   (map->fl_map_base + map->fl_map_size - 1) < (u_int32_t)base) {  //第二个也不相等
 			continue;	/* Not this one */
 		}
 		else {
-			return(map);
+			return(map);  //执行else，返回结构体指针
 		}
 	}
 	return((struct fl_map *)NULL);

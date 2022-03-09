@@ -163,7 +163,7 @@ s32 synopGMAC_read_version (synopGMACdevice * gmacdev)
 	u32 data = 0;
 	data = synopGMACReadReg(gmacdev->MacBase, GmacVersion );
 	gmacdev->Version = data;
-	printf("Version = 0x%x\n",data);
+//	printf("Version = 0x%x\n",data);
 	TR("The data read from %08x is %08x\n",(gmacdev->MacBase+GmacVersion),data);
 	return 0;
 }
@@ -1016,7 +1016,7 @@ s32 synopGMAC_mac_init(synopGMACdevice * gmacdev)
 	u32 PHYreg;
 	
 	if(gmacdev->DuplexMode == FULLDUPLEX){
-		printf("\n===phy FULLDUPLEX MODE\n");	//sw:	debug
+//		printf("\n===phy FULLDUPLEX MODE\n");	//sw:	debug
 		synopGMAC_wd_enable(gmacdev);
 		synopGMAC_jab_enable(gmacdev);
 		synopGMAC_frame_burst_enable(gmacdev);
@@ -1073,7 +1073,7 @@ s32 synopGMAC_mac_init(synopGMACdevice * gmacdev)
 	}
 	else{//for Half Duplex configuration
 		
-		printf("\n===phy HALFDUPLEX MODE\n");	//sw:	debug
+//		printf("\n===phy HALFDUPLEX MODE\n");	//sw:	debug
 		synopGMAC_wd_enable(gmacdev );
 		synopGMAC_jab_enable(gmacdev);
 		synopGMAC_frame_burst_enable(gmacdev);
@@ -1136,7 +1136,8 @@ s32 synopGMAC_mac_init(synopGMACdevice * gmacdev)
 
 		/*To set PHY register to enable CRS on Transmit*/
 	}
-		gmacdev->LinkState = gmacdev->LinkState0;
+	gmacdev->LinkState = gmacdev->LinkState0;
+
 	return 0;
 }
 
@@ -1232,19 +1233,22 @@ s32 synopGMAC_check_phy_init (synopGMACdevice * gmacdev)
 	gmacdev->LinkState0 = data;
 	if((data & 8) == 0){
 		if(gmacdev->LinkState)
+		{
 			TR("No Link: %08x\n",data);
+			if((data & 0x2) == 0x2)
+				TR0("Link down\n");
+		}
 		gmacdev->LinkState = 0;
 		gmacdev->DuplexMode = 0;
 		gmacdev->Speed = 0;
 		gmacdev->LoopBackMode = 0; 
-				
 	}
 	else{
-		//TR("Link UP: %08x\n",data);
+//		TR("Link UP: %08x\n",data);
 		if(gmacdev->LinkState!=data)
 		{
 			gmacdev->DuplexMode = (data & 1)  ? FULLDUPLEX: HALFDUPLEX ;
-			TR("Link is up in %s mode\n",(gmacdev->DuplexMode == FULLDUPLEX) ? "FULL DUPLEX": "HALF DUPLEX");
+			TR0("Link up in %s mode ",(gmacdev->DuplexMode == FULLDUPLEX) ? "FULL DUPLEX": "HALF DUPLEX");
 
 			/*if not set to Master configuration in case of Half duplex mode set it manually as Master*/
 
@@ -1252,15 +1256,15 @@ s32 synopGMAC_check_phy_init (synopGMACdevice * gmacdev)
 			{
 				case 2:
 					gmacdev->Speed      =   SPEED1000;
-					TR("Link is with 1000M Speed \n");
+					TR0("with 1000M Speed \n");
 					break;
 				case 1:
 					gmacdev->Speed      =   SPEED100;
-					TR("Link is with 100M Speed \n");
+					TR0("with 100M Speed \n");
 					break;
 				default:
 					gmacdev->Speed      =   SPEED10;
-					TR("Link is with 10M Speed \n");
+					TR0("with 10M Speed \n");
 					break;
 			}
 		}
@@ -2679,11 +2683,11 @@ void synopGMAC_clear_interrupt(synopGMACdevice *gmacdev)
 {
 	u32 data;
 	data = synopGMACReadReg(gmacdev->DmaBase, DmaStatus);
-	printf("DMA status reg = 0x%x before cleared!\n",data);
+//	printf("DMA status reg = 0x%x before cleared!\n",data);
 	synopGMACWriteReg(gmacdev->DmaBase, DmaStatus ,data);
         plat_delay(DEFAULT_LOOP_VARIABLE);
 	data = synopGMACReadReg(gmacdev->DmaBase, DmaStatus);
-	printf("DMA status reg = 0x%x after cleared!\n",data);
+//	printf("DMA status reg = 0x%x after cleared!\n",data);
 }
 
 /**

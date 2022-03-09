@@ -479,7 +479,7 @@ LEAF(CPU_SetCOUNT)
 	nop
 	j	ra
 	nop
-END(CPU_GetCOUNT)
+END(CPU_SetCOUNT)
 /*
  *  Modify SR value, arg 1 = set bits, arg 2 = clear bits.
  */
@@ -492,7 +492,7 @@ LEAF(CPU_SetSR)
 	NOP8
 	j	ra
 	nop
-END(CPU_GetCOUNT)
+END(CPU_SetSR)
 
 /*
  *  Get configuration register contents.

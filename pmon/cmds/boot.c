@@ -143,7 +143,7 @@ cmd_boot(int argc, char **argv)
 
 	dl_initialise (offset, flags);
 
-	fprintf (stderr, "Loading file: %s ", path);
+	fprintf (stderr, "Loading file2222222222222: %s ", path);
 	errno = 0;
 	n = 0;
 	if (flags & RFLAG) {

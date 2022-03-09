@@ -182,14 +182,14 @@ prhelp (const Cmd *cmd, int *lnp, int siz, int namemax, int optsmax)
 	char prnbuf[LINESZ + 8];
 	const Optdesc *p;
 	int i;
-
+	
 	sprintf (prnbuf, "%*s  %-*s %s", 
 			namemax, cmd->name, optsmax, cmd->opts, cmd->desc);
 	if(more (prnbuf, lnp, siz)) {
 		return (1);
 	}
 
-	p = cmd->optdesc;
+	p = cmd->optdesc;    //指向命令的描述
 	if(p != 0) {
 		for (i = 0; p[i].name; i++) {
 			sprintf (prnbuf, "%*s  %15s    %s", namemax, "",
@@ -216,46 +216,46 @@ cmd_help(int ac, char *av[])
 	expert = getenv(EXPERT) != 0;
 
 	clistno = 0;
-	while((CmdTable = CmdList[clistno++]) != 0) {
+	while((CmdTable = CmdList[clistno++]) != 0) {   //遍历整个数组，
 		for (i = 1; CmdTable[i].name != 0; i++) {
 			len = strlen (CmdTable[i].name);
 			if(len > namemax) {
-				namemax = len;
+				namemax = len;     //namemax保存着name的最大长度
 			}
 			len = strlen (CmdTable[i].opts);
 			if(len > optsmax) {
-				optsmax = len;
+				optsmax = len;   //optsmax保存着opts（选项）的最大长度
 			}
 			len = strlen (CmdTable[i].desc);
 			if(len > descmax) {
-				descmax = len;
+				descmax = len;   //descmax保存着desc（描述）的最大长度
 			}
-		}
+		} //猜测用于打印出对齐操作
 	}
 
-	siz = moresz;
-	ioctl (STDIN, CBREAK, NULL);
+	siz = moresz;  //使用全局变量赋值10？？
+	ioctl (STDIN, CBREAK, NULL);  //不确定是不是设置ctrl+c中断
 
 	ln = siz;
-	if(ac >= 2 && !strcmp(av[1], "*")) {	/* all commands */
-		clistno = 0;
-		while((CmdTable = CmdList[clistno++]) != 0) {
-			for (i = 1; CmdTable[i].name != 0; i++) {
+	if(ac >= 2 && !strcmp(av[1], "*")) {	/* all commands */   //参数个数大于等于2，并且参数2是*号的情况
+		clistno = 0;     //列表遍历索引清零
+		while((CmdTable = CmdList[clistno++]) != 0) {   //数组指针不为空的话，就循环
+			for (i = 1; CmdTable[i].name != 0; i++) {   //i=1,指向数组第二个元素，每一个元素的name不为空就继续循环
 				if((CmdTable[i].flag & CMD_HIDE && !expert) ||
 				    CmdTable[i].flag & CMD_ALIAS) {
-				}
-				else if(prhelp (&CmdTable[i], &ln, siz, namemax, optsmax)) {
+				}  //对于设置了CMD_HIDE标志的，或者设置了CMD_ALIAS的不显示，空操作
+				else if(prhelp (&CmdTable[i], &ln, siz, namemax, optsmax)) {  //否则调用函数prhelp打印出帮助信息
 					return(0);
 				}
 			}
 		}
 	}
-	else if(ac >= 2) {		/* specific commands */
+	else if(ac >= 2) {		/* specific commands */   //指定了命令的情况
 		for (j = 1; j < ac; j++) {
 			clistno = 0;
-			while((CmdTable = CmdList[clistno++]) != 0) {
+			while((CmdTable = CmdList[clistno++]) != 0) {  //逐级搜索
 				for (i = 1; CmdTable[i].name != 0; i++) {
-					if(!strcmp(CmdTable[i].name, av[j])) {
+					if(!strcmp(CmdTable[i].name, av[j])) {  //搜索到了，跳出循环
 						break;
 					}
 				}
@@ -266,36 +266,36 @@ cmd_help(int ac, char *av[])
 					break;
 				}
 			}
-			if(CmdTable == 0) {
+			if(CmdTable == 0) {    //没找到，打印提示信息
 				printf ("%s: not found\n", av[j]);
 			}
 		}
 	}
-	else {			/* general help only */
+	else {			/* general help only */  //只有h命令的情况下
 		const char *p = "";
 		clistno = 0;
 		i = 0;
 		j = 0;
-		while((CmdTable = CmdList[clistno++]) != 0) {
-			if(strcmp(CmdTable->name, p)) {
-				if(i % 2 != 0) {
-					if(more(prnbuf, &ln, siz)) {
+		while((CmdTable = CmdList[clistno++]) != 0) {  //开始遍历列表
+			if(strcmp(CmdTable->name, p)) {   //不相等的情况下       
+				//if(i % 2 != 0) {  //注释掉2022-03-07
+				{	if(more(prnbuf, &ln, siz)) {
 						return(0);
 					}
 				}
-				printf("%~70s\n", CmdTable->name);
+				printf("%~70s\n", CmdTable->name);   //打印分组的名称
 				i = 0;
 				j = 0;
-				p = CmdTable->name;
-			}
-			CmdTable++;
+				p = CmdTable->name;   //指向分组名，用于比较是否相同
+			} //分组名相等的情况下
+			CmdTable++; //指向分组下的第一条命令
 			while(CmdTable->name != 0) {
 				if (!(CmdTable->flag & CMD_ALIAS) &&
 				    (!(CmdTable->flag & CMD_HIDE) || expert)) {
 					sprintf(prnbuf, "%*s  %-*s", namemax,
-					       CmdTable->name, descmax, CmdTable->desc);
-					if(i % 2 != 0) {
-						if(more(prnbuf, &ln, siz)) {
+					       CmdTable->name, descmax, CmdTable->desc);   //加入到打印列表prnbuf
+					//if(i % 2 != 0) {  //每两条指令打印一次？？？  //注释掉2022-03-07
+					{	if(more(prnbuf, &ln, siz)) {
 							return(0);
 						}
 					}

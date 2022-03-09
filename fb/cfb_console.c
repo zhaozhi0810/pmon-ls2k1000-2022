@@ -106,6 +106,7 @@ CONFIG_VIDEO_HW_CURSOR:	     - Uses the hardware cursor capability of the
 //#include <target/types.h>
 #include "mod_sisfb.h"
 #include <dev/pci/pcivar.h>
+#include "mod_x86emu_int10.h"
 
 #ifdef RADEON7000
 //#define VIDEO_FB_LITTLE_ENDIAN
@@ -287,7 +288,7 @@ void	console_cursor (int state);
 #define CONSOLE_ROW_SIZE	(VIDEO_FONT_HEIGHT * VIDEO_LINE_LEN)
 #define CONSOLE_ROW_FIRST	(video_console_address)
 #define CONSOLE_ROW_SECOND	(video_console_address + CONSOLE_ROW_SIZE)
-#define CONSOLE_ROW_LAST	(video_console_address + CONSOLE_SIZE - CONSOLE_ROW_SIZE)
+#define CONSOLE_ROW_LAST	(video_console_address + (CONSOLE_ROWS-1)*CONSOLE_ROW_SIZE)
 //#define CONSOLE_SIZE		(CONSOLE_ROW_SIZE * CONSOLE_ROWS)
 #ifdef CONFIG_VIDEO_LOGO
 #define CONSOLE_SIZE		(VIDEO_COLS * (VIDEO_ROWS - VIDEO_LOGO_HEIGHT) * VIDEO_PIXEL_SIZE)
@@ -757,7 +758,9 @@ void video_drawsline(char *str, int rows, int cols)
 
 void video_putchar (int xx, int yy, unsigned char c)
 {
+#ifndef VIDEO_NO_CONSOLE
 	video_drawchars (xx, yy + VIDEO_LOGO_HEIGHT, &c, 1);
+#endif
 }
 #ifdef INTERFACE_3A780E
 void video_putchar1(int xx, int yy, unsigned char c)
@@ -767,7 +770,9 @@ void video_putchar1(int xx, int yy, unsigned char c)
 #endif
 void video_putchar_xor (int xx, int yy, unsigned char c)
 {
+#ifndef VIDEO_NO_CONSOLE
 	video_drawchars_xor (xx, yy + VIDEO_LOGO_HEIGHT, &c, 1);
+#endif
 }
 /*****************************************************************************/
 #ifdef CONFIG_CONSOLE_CURSOR
@@ -857,7 +862,8 @@ void sisfb_copyarea(int sx,int sy,int dx,int dy,int width,int height);
 #else
 
 #if defined(MEM_PRINTTO_VIDEO)
-	video_drawsline(memfb, CONSOLE_ROWS, CONSOLE_COLS);
+	if (CONSOLE_ROWS > 1)
+		video_drawsline(memfb, CONSOLE_ROWS, CONSOLE_COLS);
 #else
 
 #ifdef __mips__
@@ -898,12 +904,16 @@ void sisfb_copyarea(int sx,int sy,int dx,int dy,int width,int height);
 
 #endif
 
-#elif X800x600
-	memsetl (CONSOLE_ROW_LAST - CONSOLE_ROW_SIZE/2, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
 #elif X1368x768
 	memsetl (CONSOLE_ROW_LAST, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
+#elif X1024x768
+	memsetl (CONSOLE_ROW_LAST, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
+#elif X1280x768
+	memsetl (CONSOLE_ROW_LAST, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
+#elif X1280x800
+	memsetl (CONSOLE_ROW_LAST, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);	
 #else
-	memsetl (CONSOLE_ROW_LAST - CONSOLE_ROW_SIZE/2, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
+	memsetl (CONSOLE_ROW_LAST, CONSOLE_ROW_SIZE >> 2, CONSOLE_BG_COL);
 #endif
 }
 
@@ -970,7 +980,8 @@ void video_putc (const char c)
 			       console_row * VIDEO_FONT_HEIGHT,
 			       c);
 #ifdef MEM_PRINTTO_VIDEO
-		memfb[console_row * CONSOLE_COLS + console_col] = c;
+		if (CONSOLE_ROWS != 0)
+			memfb[console_row * CONSOLE_COLS + console_col] = c;
 #endif
 		console_col++;
 
@@ -1099,7 +1110,7 @@ int video_display_bitmap (ulong bmp_image, int x, int y)
 	colors = le32_to_cpu (bmp->header.colors_used);
 	compression = le32_to_cpu (bmp->header.compression);
 
-	debug ("Display-bmp: %d x %d  with %d colors\n",
+	printf ("Display-bmp: %d x %d  with %d colors\n",
 	       width, height, colors);
 
 	if (compression != BMP_BI_RGB) {
@@ -1308,7 +1319,8 @@ void logo_plot (void *screen, int width, int x, int y)
 
 #ifdef CONFIG_VIDEO_BMP_LOGO
 	source = bmp_logo_bitmap;
-
+/* modify by lifeng */		
+#ifndef CONFIG_VIDEO_32BPP
 	/* Allocate temporary space for computing colormap			 */
 	logo_red = malloc (BMP_LOGO_COLORS);
 	logo_green = malloc (BMP_LOGO_COLORS);
@@ -1319,6 +1331,7 @@ void logo_plot (void *screen, int width, int x, int y)
 		logo_green[i] = (bmp_logo_palette[i] & 0x00f0);
 		logo_blue[i] = (bmp_logo_palette[i] & 0x000f) << 4;
 	}
+#endif	
 #else
 	source = linux_logo;
 	logo_red = linux_logo_red;
@@ -1338,10 +1351,16 @@ void logo_plot (void *screen, int width, int x, int y)
 	while (ycount--) {
 		xcount = VIDEO_LOGO_WIDTH;
 		while (xcount--) {
+/* modify by lifeng */		
+#ifndef CONFIG_VIDEO_32BPP			
 			r = logo_red[*source - VIDEO_LOGO_LUT_OFFSET];
 			g = logo_green[*source - VIDEO_LOGO_LUT_OFFSET];
 			b = logo_blue[*source - VIDEO_LOGO_LUT_OFFSET];
-
+#else
+			b = *source++;
+			g = *source++;
+			r = *source;	
+#endif	
 			switch (VIDEO_DATA_FORMAT) {
 			case GDF__8BIT_INDEX:
 				*dest = *source;
@@ -1379,9 +1398,12 @@ void logo_plot (void *screen, int width, int x, int y)
 		dest += skip;
 	}
 #ifdef CONFIG_VIDEO_BMP_LOGO
+/* modify by lifeng */	
+#ifndef CONFIG_VIDEO_32BPP
 	free (logo_red);
 	free (logo_green);
 	free (logo_blue);
+#endif	
 #endif
 }
 
@@ -1432,7 +1454,8 @@ void video_cls(void)
 		CONSOLE_SIZE>>2, 
 		CONSOLE_BG_COL);
 #ifdef MEM_PRINTTO_VIDEO
-	memsetl (memfb, CONSOLE_ROWS * CONSOLE_COLS >> 2, CONSOLE_BG_COL);
+	if (CONSOLE_ROWS != 0)
+		memsetl (memfb, CONSOLE_ROWS * CONSOLE_COLS >> 2, CONSOLE_BG_COL);
 #endif
 }
 
@@ -1455,7 +1478,7 @@ void video_set_background(unsigned char r, unsigned char g, unsigned char b)
 		cnt -= 2;		
 	}
 }
-static int record = 1;
+static int record = 0;
 //80*24
 #if defined(X640x480)
 char console_buffer[2][31][81]={32};//80*30->640x480
@@ -1471,8 +1494,11 @@ char console_buffer[2][65][161]={32};//128*48->1024x768
 char console_buffer[2][49][172]={32};//128*48->1024x768
 #elif defined(X320x240)
 char console_buffer[2][16][41]={32};//40*15->320x240
+#elif defined(FB_XSIZE) && defined(FB_YSIZE)
+char console_buffer[2][FB_YSIZE/8+1][FB_XSIZE/16+1]={32};
 #else
-char console_buffer[2][31][81]={32};//80*30->640x480
+//char console_buffer[2][31][81]={32};//80*30->640x480
+char console_buffer[2][67][241]={32};//240*67->1920x1080
 #endif
 
 void video_console_print(int console_col, int console_row, unsigned char *s)
@@ -1556,6 +1582,7 @@ void video_set_color(unsigned char color)
 #endif
 static void __cprint(int y, int x,int width,char color, const char *buf)
 {
+	begin_record();
 #ifndef FB_MENU_NOCLOLOR
 	bgx = pallete[color>>4];
 	bgx |= (bgx << 16);
@@ -1639,8 +1666,8 @@ int fb_init (unsigned long fbbase,unsigned long iobase)
 #elif defined(X320x240)
         pGD->winSizeX  = 320;
         pGD->winSizeY  = 240;
-#else
-#if !defined(FB_XSIZE)
+#elif NMOD_X86EMU_INT10 && (!defined(FB_XSIZE) || !defined(FB_YSIZE))
+#if !defined(FB_XSIZE) 
 #define FB_XSIZE 800
 #endif
 #if !defined(FB_YSIZE)
@@ -1648,6 +1675,9 @@ int fb_init (unsigned long fbbase,unsigned long iobase)
 #endif
         pGD->winSizeX  = ScreenLineLength/((ScreenDepth+1)/8);
         pGD->winSizeY  = ScreenHeight;
+#else
+        pGD->winSizeX  = FB_XSIZE;
+        pGD->winSizeY  = FB_YSIZE;
 #endif
 
 #if   defined(CONFIG_VIDEO_1BPP)
@@ -1668,7 +1698,7 @@ int fb_init (unsigned long fbbase,unsigned long iobase)
 #elif defined(CONFIG_VIDEO_16BPP)
         pGD->gdfBytesPP= 2;
         pGD->gdfIndex  = GDF_16BIT_565RGB;
-#elif defined(CONFIG_VIDE0_24BPP)
+#elif defined(CONFIG_VIDEO_24BPP)
         pGD->gdfBytesPP= 3;
 		pGD->gdfIndex=GDF_24BIT_888RGB;
 #elif defined(CONFIG_VIDEO_32BPP)
@@ -1773,9 +1803,202 @@ int fb_init (unsigned long fbbase,unsigned long iobase)
 
 	memset (console_buffer, ' ', sizeof console_buffer);
 #if defined(MEM_PRINTTO_VIDEO)
-	memfb = malloc(CONSOLE_ROWS * CONSOLE_COLS);
-	memset (memfb, 0, CONSOLE_ROWS * CONSOLE_COLS);
+	if (CONSOLE_ROWS != 0)
+	{
+		memfb = malloc(CONSOLE_ROWS * CONSOLE_COLS);
+		memset (memfb, 0, CONSOLE_ROWS * CONSOLE_COLS);
+	}
 #endif
 	return 0;
+}
+
+
+void cmd_testcolor (int argc, char **argv)
+{
+	int i=0;
+	int j=0;
+	int width=0;
+	int height=0;
+	int type=0;
+	int color=0;
+	unsigned char r, g, b;
+	unsigned char color_r, color_g, color_b;
+	unsigned char *dest = (unsigned char *)0x8e800000;
+		
+	if (argc < 5)
+	{
+		printf("input err!\n");
+		printf("testcolor width height type color \n");
+		return -1;
+	}
+		
+	
+	width = strtoul(argv[1], 0, 0);
+	height = strtoul(argv[2], 0, 0);
+	type = strtoul(argv[3], 0, 0);
+	color = strtoul(argv[4], 0, 0);
+	
+	printf("test %dx%d.type:%d color:0x%x.\n", width, height, type, color);
+	color_r = (color&0xff000000) >> 24;
+	color_g = (color&0x00ff0000) >> 16;
+	color_b = (color&0x0000ff00) >> 8;
+	
+	if(type == 0)//type=0,单色
+	{
+		for(j = 0; j < height; j++)
+		{
+			for(i = 0; i < width; i++)
+			{
+				r = color_r;
+				g = color_g;
+				b = color_b;
+				
+				switch (VIDEO_DATA_FORMAT) {
+				case GDF__8BIT_INDEX:
+					*dest = color;
+					break;
+				case GDF__8BIT_332RGB:
+					*dest = ((r >> 5) << 5) | ((g >> 5) << 2) | (b >> 6);
+					break;
+				case GDF_15BIT_555RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)));
+					break;
+				case GDF_16BIT_565RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3)));
+					break;
+				case GDF_32BIT_X888RGB:
+					*(unsigned long *) dest =
+						SWAP32 ((unsigned long) ((r << 16) | (g << 8) | b));
+					break;
+				case GDF_24BIT_888RGB:
+	#ifdef VIDEO_FB_LITTLE_ENDIAN
+					dest[0] = b;
+					dest[1] = g;
+					dest[2] = r;
+	#else
+					dest[0] = r;
+					dest[1] = g;
+					dest[2] = b;
+	#endif
+					break;
+				}
+				dest += VIDEO_PIXEL_SIZE;				
+			}
+		}
+	}
+	else if(type == 1)//type=1,灰阶
+	{
+		for(j=0;j<height;j++)
+		{
+			for(i=0;i<width;i++)
+			{
+				r = i * color_r / (width-1);
+				g = i * color_g / (width-1);
+				b = i * color_b / (width-1);
+				
+				switch (VIDEO_DATA_FORMAT) {
+				case GDF__8BIT_INDEX:
+					*dest = color;
+					break;
+				case GDF__8BIT_332RGB:
+					*dest = ((color_r >> 5) << 5) | ((color_g >> 5) << 2) | (color_b >> 6);
+					break;
+				case GDF_15BIT_555RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((color_r >> 3) << 10) | ((color_g >> 3) << 5) | (color_b >> 3)));
+					break;
+				case GDF_16BIT_565RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((color_r >> 3) << 11) | ((color_g >> 2) << 5) | (color_b >> 3)));
+					break;
+				case GDF_32BIT_X888RGB:
+					*(unsigned long *) dest =
+						SWAP32 ((unsigned long) ((color_r << 16) | (color_g << 8) | color_b));
+					break;
+				case GDF_24BIT_888RGB:
+	#ifdef VIDEO_FB_LITTLE_ENDIAN
+					dest[0] = color_b;
+					dest[1] = color_g;
+					dest[2] = color_r;
+	#else
+					dest[0] = color_r;
+					dest[1] = color_g;
+					dest[2] = color_b;
+	#endif
+					break;
+				}
+				dest += VIDEO_PIXEL_SIZE;					
+			}
+		}
+	}
+	else if(type == 2)//type=2,灰阶
+	{
+		for(j=0;j<height;j++)
+		{
+			for(i=0;i<width;i++)
+			{
+				if(color_r!=0)
+					r = i % color_r;
+				else
+					r = 0;
+				if(color_g!=0)
+					g = i % color_g;
+				else
+					g = 0;
+				if(color_b!=0)
+					b = i % color_b;
+				else
+					b=0;
+				
+				switch (VIDEO_DATA_FORMAT) {
+				case GDF__8BIT_INDEX:
+					*dest = color;
+					break;
+				case GDF__8BIT_332RGB:
+					*dest = ((color_r >> 5) << 5) | ((color_g >> 5) << 2) | (color_b >> 6);
+					break;
+				case GDF_15BIT_555RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((color_r >> 3) << 10) | ((color_g >> 3) << 5) | (color_b >> 3)));
+					break;
+				case GDF_16BIT_565RGB:
+					*(unsigned short *) dest =
+						SWAP16 ((unsigned short) (((color_r >> 3) << 11) | ((color_g >> 2) << 5) | (color_b >> 3)));
+					break;
+				case GDF_32BIT_X888RGB:
+					*(unsigned long *) dest =
+						SWAP32 ((unsigned long) ((color_r << 16) | (color_g << 8) | color_b));
+					break;
+				case GDF_24BIT_888RGB:
+	#ifdef VIDEO_FB_LITTLE_ENDIAN
+					dest[0] = color_b;
+					dest[1] = color_g;
+					dest[2] = color_r;
+	#else
+					dest[0] = color_r;
+					dest[1] = color_g;
+					dest[2] = color_b;
+	#endif
+					break;
+				}
+				dest += VIDEO_PIXEL_SIZE;			
+			}
+		}
+	}
+}
+
+
+static const Cmd Cmds[] = {
+	{"Misc"},
+	{"testcolor", "", NULL, "test color of LS2K", cmd_testcolor, 1, 99, 0},
+	{0, 0}
+};
+
+static void init_cmd __P((void)) __attribute__ ((constructor));
+static void init_cmd()
+{
+	cmdlist_expand(Cmds, 1);
 }
 
