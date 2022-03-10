@@ -1,12 +1,16 @@
----- no match Matches (5 in 5 files) ----
-algorithm.doc (pmon\cmds\newgzip) line 53 : are inserted in the hash table only when no match was found, or
-cmd_unset in cmd_env.c (pmon\cmds) : 			printf ("%s: no match\n", av[i]);
-deflate_slow in deflate.c (pmon\cmds\gzip\zlib_deflate) :             /* If there was no match at the previous position, output a
-deflate in deflate.c (pmon\cmds\newgzip) :             /* If there was no match at the previous position, output a
-deflate_slow in deflate.c (zloader\zlib_deflate) :             /* If there was no match at the previous position, output a
----- no match Search Errors Encountered (4) ----
-The following 4 files could not be processed:
+---- write_pmon Matches (6 in 2 files) ----
+pmon.bin (Targets\LS2K-hj20004\compile\ls2k) line 2567 : use: write_pmon src(ram addr) dst(flash addr) size
+spi_w.c (Targets\LS2K-hj20004\dev) line 280 : int write_pmon(int argc,char **argv)
+write_pmon in spi_w.c (Targets\LS2K-hj20004\dev) :             printf("\nuse: write_pmon src(ram addr) dst(flash addr) size\n");
+spi_w.c (Targets\LS2K-hj20004\dev) line 585 : 	{"write_pmon","",0,"write_pmon(sst25vf080b)",write_pmon,0,99,CMD_REPEAT},
+---- write_pmon Search Errors Encountered (9) ----
+The following 9 files could not be processed:
 X:\ls2a1000\pmon-loongson3-hj20004\doc\html\atmel-anim.gif : File could not be opened.
 X:\ls2a1000\pmon-loongson3-hj20004\doc\html\Check.gif : File could not be opened.
 X:\ls2a1000\pmon-loongson3-hj20004\fb\cosic.bmp : File could not be opened.
 X:\ls2a1000\pmon-loongson3-hj20004\fb\cssic.bmp : File could not be opened.
+X:\ls2a1000\pmon-loongson3-hj20004\doc\html\hg-amd.gif : File could not be opened.
+X:\ls2a1000\pmon-loongson3-hj20004\fb\htkg.bmp : File could not be opened.
+X:\ls2a1000\pmon-loongson3-hj20004\doc\html\Intel-flash-homeg2.gif : File could not be opened.
+X:\ls2a1000\pmon-loongson3-hj20004\fb\lemote_logo4.bmp : File could not be opened.
+X:\ls2a1000\pmon-loongson3-hj20004\fb\lemote_logo5.bmp : File could not be opened.

@@ -454,6 +454,7 @@ main()
 	char prompt[32];
 	int i;
 #ifdef ARB_LEVEL
+	printf("save_board_ddrparam------------- \n");
 	save_board_ddrparam(0);
 #endif
 	if(cmd_main_mutex == 2)

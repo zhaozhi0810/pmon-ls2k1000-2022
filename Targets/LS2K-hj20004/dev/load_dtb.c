@@ -295,8 +295,8 @@ static int update_prop_flag(void * ssp, char *propname, int wanted)
 void verify_dtb(void)
 {
 	char *dtbram;
-	dtbram = (char *)(tgt_flashmap()->fl_map_base);
-	dtbram += DTB_OFFS;
+	dtbram = (char *)(tgt_flashmap()->fl_map_base);   //0xbfc0,0000
+	dtbram += DTB_OFFS;									//0xbfcf,b000
 	working_fdt = (struct fdt_header *)(dtbram + 4);
 	if(dtb_cksum(dtbram, DTB_SIZE - 4, 0)) {
 		printf("dtb chsum err! you should load_dtb before boot kernel!!!\n");

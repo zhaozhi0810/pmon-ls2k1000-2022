@@ -51,15 +51,12 @@ void spi_initr()
 
 //发送数据，需配合写使能，片选操作。
 static unsigned char spi_send_byte(unsigned char val)
-{
+{	
+	while((GET_SPI(SPSR))&WFFULL);  //发送缓存满！！，等待
 	SET_SPI(TXFIFO,val);
-	while((GET_SPI(SPSR))&RFEMPTY == RFEMPTY); //等待发送结束
+	while((GET_SPI(SPSR))&RFEMPTY); //等待发送结束
 	return GET_SPI(RXFIFO); //读缓存
 }
-
-
-
-
 #endif
 
 
@@ -93,11 +90,11 @@ int read_sr(void)
 #ifdef NEW_SPI_ZZ
 static void spi_flash_check_busy(void)
 {
-	int res;
+	unsigned char res;
 
 	do{
 		res = read_sr();  //读flash状态寄存器
-	}while(res&0x01 == 1);  //忙则继续等
+	}while((res&0x01));  //忙则继续等
 }
 #endif
 
@@ -108,9 +105,12 @@ int set_wren(void)
 	int res;
 
 #ifdef NEW_SPI_ZZ
-	spi_flash_check_busy();
+	//spi_flash_check_busy();
 	SET_SPI(SOFTCS,0x01);  //片选
 	spi_send_byte(0x06);  //写使能	
+	SET_SPI(SOFTCS,0x11);   //取消片选
+	spi_flash_check_busy();
+	return 1;
 #else	
 	res = read_sr();  //读flash状态寄存器
 	while(res&0x01 == 1)  //忙则继续等
@@ -124,10 +124,11 @@ int set_wren(void)
        	while((GET_SPI(SPSR))&RFEMPTY == RFEMPTY){  //等待发送接收
 	}
 	GET_SPI(RXFIFO);  //读接收缓存，数据丢掉
-#endif
+
 	SET_SPI(SOFTCS,0x11);   //取消片选
 
 	return 1;
+#endif
 }
 
 ///////////////////////write status reg///////////////////////
@@ -137,7 +138,7 @@ int write_sr(char val)
 #ifdef NEW_SPI_ZZ
 	set_wren(); //flash写使能操作
 
-	spi_flash_check_busy();
+	//spi_flash_check_busy();
 	SET_SPI(SOFTCS,0x01);  //片选
 	spi_send_byte(0x01);  //写状态寄存器	
 	spi_send_byte(val);  //写入值
@@ -252,16 +253,18 @@ void spi_read_id(void)
 //返回写入的字节数
 static int spi_write_pagebytes(unsigned int addr,unsigned char *data,int len)
 {
-	unsigned int i;
+	unsigned int i = 0;
+
+//	printf("1 addr = %#x i = %u, len = %d data[0] = %hhx\n",addr,i,len,data[0]);
 	
 	if(len > PAGE_SIZE)
 		len = PAGE_SIZE;   //最多一次编程1page
 
-	i = addr % PAGE_SIZE;  //起始地址是不是4k的整数倍
+	i = addr & (0xff);  //起始地址是不是256的整数倍
 	if(len + i > PAGE_SIZE) //页内有偏移，从写入的位置开始，到结束不能超过页的边界
 		len = PAGE_SIZE - i; //写入页内字节数
 	
-	
+//	printf("addr = %#x i = %u, len = %d data[0] = %hhx\n",addr,i,len,data[0]);
 	//1. 写使能
 	set_wren();
 
@@ -270,9 +273,9 @@ static int spi_write_pagebytes(unsigned int addr,unsigned char *data,int len)
 	spi_send_byte(0x02);  //写页编程指令
 
 	//3. 发送地址
-	spi_send_byte((addr & 0xff0000)>>16);  //写地址
-	spi_send_byte((addr & 0x00ff00)>>8);  //写地址
-	spi_send_byte(addr & 0x0000ff);  //写地址
+	spi_send_byte((addr)>>16);  //写地址
+	spi_send_byte((addr)>>8);  //写地址
+	spi_send_byte(addr);  //写地址
 
 	//4. 发送数据
 	for(i=0;i<len;i++)
@@ -294,11 +297,15 @@ static void spi_write_bytes(unsigned int addr,unsigned char *data,int len)
 	int ret = 0;
 
 	while(len>0)
-	{		
-		ret = spi_write_pagebytes(addr,data,len);
+	{
+		delay(3000);    //必须延时，否则写失败
+		ret = spi_write_pagebytes(addr,data,len);  //返回写入了多少个字节
+	//	printf("spi_write_bytes ret = %d\n",ret);
 		addr+=ret;  //指针向后移动
 		data+=ret;  //指针向后移动
 		len -= ret;
+	//	udelay(10000);    //必须延时，否则写失败
+		dotik(32, 0);			//显示旋转的字符
 	}	
 }
 #endif
