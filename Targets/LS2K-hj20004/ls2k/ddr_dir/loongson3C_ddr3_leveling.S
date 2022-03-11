@@ -1682,7 +1682,7 @@ glvl_resp_set1_done:
 	dli     t5,     0x0
 preamble_check_init:
 /* check the preamble exist */
-	PRINTSTR("\r\nPREAMBLE CHECK!!\r\n")
+//	PRINTSTR("\r\nPREAMBLE CHECK!!\r\n")  //2022-03-11
 // set the gate signal 0.75 period before
 	dli 	s6,	PREAMBLE_LENGTH_3A9 //s6 represents 0.75 period to be checked
 	dli	a3, 0x80
@@ -1889,11 +1889,11 @@ test_continuous5_0:
 	nop
 
 glvl_check_preamble_fail:
-	PRINTSTR("\r\nThe preamble check failed @")
-	move	a0, s6
-	bal 	hexserial
-	nop
-	PRINTSTR("\r\n")
+//	PRINTSTR("\r\nThe preamble check failed @")   //2022-03-10
+//	move	a0, s6
+//	bal 	hexserial
+//	nop
+//	PRINTSTR("\r\n")
 
 	dli	s6, 0x0
 	lb	a0, 0x6(t1)

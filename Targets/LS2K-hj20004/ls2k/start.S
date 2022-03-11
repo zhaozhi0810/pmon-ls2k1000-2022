@@ -197,8 +197,8 @@ stack = start - 0x4000		/* Place PMON stack below PMON start in RAM */
 	sw t2,0x0(t0)
 2:
 #endif
-	bal watchdog_close
-	nop
+//	bal watchdog_close  //2022-03-10 引脚也不对，原理图上看门狗芯片没控制cpu
+//	nop					//注释后无影响，
 
 	/* init processor state at first*/
 /* NOTE!! Not more that 16 instructions here!!! Right now it's FULL! */

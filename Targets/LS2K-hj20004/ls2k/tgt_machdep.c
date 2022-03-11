@@ -240,8 +240,8 @@ void initmips(unsigned long long  raw_memsz)
 	tgt_cpufreq();
 	SBD_DISPLAY("DONE", 0);
 	
-	ls2k_pwm(0, 625000,1250000);/*100hz*/
-	ls2k_pwm(1, 9000,10000);
+	ls2k_pwm(0, 625000,1250000);/*100hz*/  //  LCD亮度
+	ls2k_pwm(1, 9000,10000);              //原理图上其实没有连接
 	
 	cpuinfotab[0] = &DBGREG;
 	/*
@@ -250,11 +250,9 @@ void initmips(unsigned long long  raw_memsz)
 	CPU_ConfigCache();
 
 	dbginit(NULL);
-//	printf("line %s\n",__LINE__);
 #ifndef ROM_EXCEPTION
 	CPU_SetSR(0, SR_BOOT_EXC_VEC);
 #endif
-//	printf("line %s\n",__LINE__);
 
 	/*
 	 *  Set up exception vectors.
@@ -1175,7 +1173,7 @@ int tgt_unsetenv(char *name)
 	if (nvram_invalid) {
 		return (0);
 	}
-	printf("tgt_unsetenv name = (%s)\n",name);
+	//printf("tgt_unsetenv name = (%s)\n",name);
 	/* Use first defined flash device (we probably have only one) */
 #ifdef NVRAM_IN_FLASH
 	nvram = (char *)(tgt_flashmap())->fl_map_base;

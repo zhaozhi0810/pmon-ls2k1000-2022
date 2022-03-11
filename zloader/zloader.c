@@ -22,7 +22,7 @@ return p;
 }
 
 #include "malloc.c"
-#endif
+#endif  //#ifndef SIM
 /*
  * gzip declarations
  */
