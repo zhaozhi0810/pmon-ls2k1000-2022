@@ -32,20 +32,20 @@ extern char           *heaptop;
 /*#define BONITO(x)	*(volatile unsigned long *)(PHYS_TO_UNCACHED(BONITO_REG_BASE)+(x))*/
 #define BONITO(x)	*(volatile unsigned long *)(0xbfe00000+(x))
 struct pci_config_data {
-		int bus;
-		int dev;
-		int func;
-		int interrupt;
-		int primary;
-		int secondary;
-		int subordinate;
-		unsigned int mem_start;
-		unsigned int mem_end;
-		unsigned int io_start;
-		unsigned int io_end;
+		int bus;    //总线
+		int dev;    //设备号
+		int func;   //功能号
+		int interrupt;  //中断号
+		int primary;    //连接的总线号
+		int secondary;  //所在的总线号
+		int subordinate;  //最大的总线号
+		unsigned int mem_start;  //内存地址起始位置
+		unsigned int mem_end;   //内存地址结束位置
+		unsigned int io_start;  //io地址起始位置
+		unsigned int io_end;   //io地址结束位置
 #define PCI_DEV		0x1
 #define PCI_BRIDGE	0x2
-		int type;
+		int type;              //类型，桥or设备
 }__attribute__((aligned(4)));
 #define LS2K_PCI_IO_MASK 0x1ffffff
 #endif /* __ASSEMBLER__ */

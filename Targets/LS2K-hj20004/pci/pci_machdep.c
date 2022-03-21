@@ -85,12 +85,12 @@ _pci_hwinit(initialise, iot, memt)
 	int newcfg=0;
 	char *env;
 	SBD_DISPLAY ("HW-0", 0);
-	if(getenv("newcfg"))newcfg=1;
+	if(getenv("newcfg"))newcfg=1;  //根据环境变量取值
 
-	if ((env = getenv("pci_probe_only")))
+	if ((env = getenv("pci_probe_only")))   //环境变量取值
 	  pci_probe_only = strtoul(env, 0, 0);
 
-	if (!initialise) {
+	if (!initialise) {   //参数为1，不成立。
 		return(0);
 	}
 	SBD_DISPLAY ("HW-1", 0);
@@ -102,24 +102,24 @@ _pci_hwinit(initialise, iot, memt)
 	/*
 	 * PCI Bus 0
 	 */
-	pd = pmalloc(sizeof(struct pci_device));
-	pb = pmalloc(sizeof(struct pci_bus));
+	pd = pmalloc(sizeof(struct pci_device)); //分配空间
+	pb = pmalloc(sizeof(struct pci_bus));    //分配空间
 	if(pd == NULL || pb == NULL) {
 		printf("pci: can't alloc memory. pci not initialized\n");
 		return(-1);
 	}
 	SBD_DISPLAY ("HW-2", 0);
-
+	//对结构体进行初始化，这是pd，device设备
 	pd->pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	pd->pa.pa_iot = pmalloc(sizeof(bus_space_tag_t));
 	pd->pa.pa_iot->bus_reverse = 1;
-	pd->pa.pa_iot->bus_base = BONITO_PCIIO_BASE_VA;
+	pd->pa.pa_iot->bus_base = BONITO_PCIIO_BASE_VA;    //0xbfd0,0000,所有的io都在这1M的空间内
 	pd->pa.pa_memt = pmalloc(sizeof(bus_space_tag_t));
 	pd->pa.pa_memt->bus_reverse = 1;
 	pd->pa.pa_memt->bus_base = 0xc0000000;
 	pd->pa.pa_dmat = &bus_dmamap_tag;
 	pd->bridge.secbus = pb;
-	_pci_head = pd;
+	_pci_head = pd;           //全局变量保存这个结构体的首地址
 	SBD_DISPLAY ("HW-3", 0);
 
 	if(pci_probe_only)
@@ -266,26 +266,26 @@ pci_sync_cache(p, adr, size, rw)
 int pci_get_busno(struct pci_device *pd, int bus)
 {
 	int ret = bus + 1;
-	if(!pd->pa.pa_bus)
+	if(!pd->pa.pa_bus)  //值为0.
 	{
 		switch(pd->pa.pa_device)
 		{
-			case 9:
+			case 9: //pcie0 port0?
 				ret = 1;
 				break;
-			case 0xa:
+			case 0xa: //pcie0 port1?
 				ret = 4;
 				break;
-			case 0xb:
+			case 0xb: //pcie0 port2?
 				ret = 8;
 				break;
-			case 0xc:
+			case 0xc: //pcie0 port3?
 				ret = 0xc;
 				break;
-			case 0xd:
+			case 0xd: //pcie1 port0?
 				ret = 0x10;
 				break;
-			case 0xe:
+			case 0xe: //pcie1 port1?
 				ret = 0x14;
 				break;
 		}
