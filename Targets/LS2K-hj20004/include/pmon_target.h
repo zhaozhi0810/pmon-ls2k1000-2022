@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  *
  */
-
 #include <target/bonito.h>
 
 #ifdef SBD_DEBUG
@@ -67,7 +66,7 @@ extern int mtd_rescan(char *,char *);
 #include "nand.h"
 #if NNAND
 #define TGT_DEFENV  {"mtdparts","nand-flash:10M@0(kernel)ro,-(rootfs)",0,&mtd_rescan},   \
-                    {"bootdelay","3",0,0}
+                    {"bootdelay","0",0,0}
 #else
-#define TGT_DEFENV  {"bootdelay","3",0,0}
+#define TGT_DEFENV  {"bootdelay","0",0,0}
 #endif

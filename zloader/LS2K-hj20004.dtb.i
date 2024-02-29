@@ -1,7 +1,7 @@
-# 1 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 1 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
 # 1 "<built-in>"
 # 1 "<command-line>"
-# 1 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 1 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
 
 
 
@@ -60,7 +60,7 @@
    msi-mask = <0x000000c0 0x40000c00>;
    reg = <0x1fe114a0 0x60>;
   };
-# 71 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 71 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   dc@0x400c0000 {
    compatible = "loongson,ls-fb";
    reg = <0x400c0000 0x10000
@@ -72,7 +72,7 @@
    interrupt-parent = <&icu>;
    interrupts = <36>;
   };
-# 93 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 93 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   ohci@0x40070000 {
    compatible = "loongson,ls2k-ohci", "usb-ohci", "generic-ohci";
    reg = <0x40070000 0x10000>;
@@ -130,7 +130,80 @@
    phy_addr = <0xffffffff>;
    dma-mask = <0xffffffff 0xffffffff>;
   };
-# 224 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+
+
+
+  pcie0_port0@40100000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <40>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0x1 0x3>;
+
+
+
+
+     ranges = <0x02000000 0x0 0x40260000 0x40260000 0x0 0x8000000
+      0x01000000 0x0 0x4028c000 0x4028c000 0x0 0x0ff000>;
+
+  };
+
+  pcie0_port1@50000000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <41>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0x4 0x6>;
+     ranges = <0x02000000 0x0 0x50000000 0x50000000 0x0 0x4000000
+      0x01000000 0x0 0x18100000 0x18100000 0x0 0x100000>;
+  };
+
+  pcie0_port2@54000000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <42>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0x8 0xa>;
+     ranges = <0x02000000 0x0 0x54000000 0x54000000 0x0 0x4000000
+      0x01000000 0x0 0x18200000 0x18200000 0x0 0x100000>;
+  };
+
+  pcie0_port3@58000000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <43>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0xc 0xe>;
+     ranges = <0x02000000 0x0 0x58000000 0x58000000 0x0 0x8000000
+      0x01000000 0x0 0x18300000 0x18300000 0x0 0x100000>;
+  };
+
+  pcie1_port0@60000000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <44>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0x10 0x12>;
+     ranges = <0x02000000 0x0 0x60000000 0x60000000 0x0 0x18000000
+      0x01000000 0x0 0x18400000 0x18400000 0x0 0x100000>;
+  };
+
+  pcie1_port1@78000000 {
+   compatible = "loongson,ls-pcie";
+   interrupt-parent = <&icu>;
+   interrupts = <45>;
+   #address-cells = <3>;
+   #size-cells = <2>;
+   bus-range = <0x14 0x16>;
+     ranges = <0x02000000 0x0 0x78000000 0x78000000 0x0 0x8000000
+      0x01000000 0x0 0x18500000 0x18500000 0x0 0x100000>;
+  };
+
   serial0x@0x1fe00000{
    device_type = "serial";
    compatible = "ns16550";
@@ -139,7 +212,7 @@
    interrupt-parent = <&icu>;
    interrupts = <8>;
   };
-# 250 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 250 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   serial5x@0x1fe00500{
    device_type = "serial";
    compatible = "ns16550";
@@ -164,21 +237,26 @@
    interrupts = <30>;
    #address-cells = <1>;
    #size-cells = <0>;
-# 296 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+
+   rtc@51{
+    compatible = "nxp,pcf8563";
+    reg = <0x51>;
+   };
+# 296 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   };
-# 356 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
-  rtc0: rtc@1fe07800{
-   compatible = "loongson,ls-rtc";
-   reg = <0x1fe07800 0x100>;
-   interrupt-parent = <&icu>;
-   interrupts = <60>;
+# 343 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+  spi0: spi@1fff0220{
+   compatible = "loongson,ls2k-spi";
+   #address-cells = <1>;
+   #size-cells = <0>;
+   reg = <0x1fff0220 0x10>;
+   spidev@0{
+    compatible = "rohm,dh2228fv";
+    spi-max-frequency = <100000000>;
+    reg = <0>;
+   };
   };
-
-
-
-
-
-
+# 368 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   can0: can@1fe00c00{
    compatible = "nxp,sja1000";
    reg = <0x1fe00c00 0xff>;
@@ -193,7 +271,7 @@
    interrupt-parent = <&icu>;
    interrupts = <25>;
   };
-# 415 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 415 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   apbdma: apbdma@1fe10438{
    compatible = "loongson,ls-apbdma";
    reg = <0x1fe10438 0x8>;
@@ -235,7 +313,7 @@
    dma-channels = <1>;
    dma-requests = <1>;
   };
-# 533 "/home/jc/ls2a1000/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
+# 533 "/home/jc/ls2k1000-20240208/pmon-loongson3-hj20004/zloader.ls2k-hj20004/../Targets/LS2K-hj20004/conf/LS2K-hj20004.dts"
   hwmon@0x1fe07000{
    #address-cells = <1>;
    #size-cells = <1>;

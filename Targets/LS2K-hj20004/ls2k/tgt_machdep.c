@@ -70,6 +70,7 @@ int tgt_printf(const char *fmt, ...)
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <dev/ic/mc146818reg.h>
 #include <linux/io.h>
@@ -322,13 +323,15 @@ static void init_pcidev(void)
 	
 #if 1	
 	//config GPIO dir 0-out 1-in
-	*(volatile unsigned int *)0xbfe10500 |=  0x0000000f; //in:3-0 
-	*(volatile unsigned int *)0xbfe10504 |=  0x000000c0; //in:39-38 
-	*(volatile unsigned int *)0xbfe10504 &= ~0x002f2300; //out: 53 51-48 45 41-40  
+	//*(volatile unsigned int *)0xbfe10500 |=  0x00000003; //in:0-1
+	//*(volatile unsigned int *)0xbfe10500 &= ~0x80001000; //out:44 63 
+	//*(volatile unsigned int *)0xbfe10504 |=  0x000000c0; //in:39-38 
+	*(volatile unsigned int *)0xbfe10504 &= ~0x80001000; //out:44 63  
 	
 	//config GPIO out 0-low 1-high
-	*(volatile unsigned int *)0xbfe10514 &= ~0x000d0100; //low:51-50 48 40
-	*(volatile unsigned int *)0xbfe10514 |=  0x00222200; //high:53 49 45 41
+	//*(volatile unsigned int *)0xbfe10510 &= ~0x80001000; //low:44 63
+	//*(volatile unsigned int *)0xbfe10514 &= ~0x000d0100; //low:51-50 48 40
+	*(volatile unsigned int *)0xbfe10514 =  0x0; //low:44 63
 #endif		
 
 	
@@ -579,6 +582,25 @@ void tgt_cmd_vers()
 {
 }
 
+void cmd_wdg_feed()
+{
+	*(volatile unsigned int *)0xbfe10514 |= 0x80001000; //high:44 63
+	printf("feed FPGA wdg success.\n");
+}
+
+static const Cmd Cmds[] =
+{
+	{"MyCmds"},
+	{"wdg","",0,"feed FPGA wdg", cmd_wdg_feed,0,99,CMD_REPEAT},
+	{0, 0}
+};
+
+static void init_cmd __P((void)) __attribute__ ((constructor));
+static void init_cmd()
+{
+	cmdlist_expand(Cmds, 1);
+}
+
 /*
  *  Display any target specific logo.
  */
@@ -611,6 +633,7 @@ void tgt_logo()
 	printf
 	    ("[[[[[[[2005][[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n");
 #endif
+	cmd_wdg_feed();
 	printf("\n");
 	printf("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[\n");
 	printf("[[  [[[[[[[[[       [[[[[       [[[[   [[[[[  [[[[[      [[[[[       [[[[[       [[[[   [[[[[  [[\n");

@@ -1379,7 +1379,7 @@ int paint_childwindow(char **hint,char *diskdev_name[],char *netdev_name[],int e
 
 					setenv("append",sysconfig.kargs);
 					setenv("append1",sysconfig.kargs1);
-					setenv("bootdelay","3");
+					setenv("bootdelay","0");
 
 					setenv("disp", dispdev);
 					setenv("disp1", dispdev1);

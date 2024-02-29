@@ -74,8 +74,8 @@ asm volatile(
 #endif
 void initmips(unsigned long long msize,unsigned long long dmsize, unsigned long long dctrl)
 {
-    long *edata=(void *)0x8f234d78;
-    long *end=(void *)0x8f26fb44;
+    long *edata=(void *)0x8f234d80;
+    long *end=(void *)0x8f26fb4c;
     int *p;
 
 	int debug=(msize==0);
@@ -118,7 +118,7 @@ void initmips(unsigned long long msize,unsigned long long dmsize, unsigned long 
 void realinitmips(unsigned long long msize)
 {
 	     asm ("li  $29,0x8f010000-0x4000;\n" \
-"		       li $2,0x8f0b4b88;\n" \
+"		       li $2,0x8f0b4bdc;\n" \
 "			   move $4,%0;\n" \
 "			   jalr $2;\n" \
 "			   nop;\n" \

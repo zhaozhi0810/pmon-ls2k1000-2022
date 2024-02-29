@@ -184,6 +184,10 @@ extern vm_map_t mb_map, kernel_map;
 	delay(10000);
 
 #ifdef INET
+
+	ifconfig ("syn0", "192.168.1.12");    //配一个默认ip  ，2024-0229
+	ifconfig ("syn1", "192.168.0.12");    //配一个默认ip  ，2024-0229
+
 	if (getenv("ifconfig") != 0) {
 		/* configure the default ethernet interface */
 		char *ip = getenv("ifconfig");

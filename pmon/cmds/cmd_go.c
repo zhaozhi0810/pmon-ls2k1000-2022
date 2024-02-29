@@ -78,6 +78,11 @@ const Optdesc         cmd_g_opts[] = {
 	{"-b <bptadr>", "temporary breakpoint"},
 #endif
 	{"-- <args>", "args to be passed to client"},
+	{"\n Most frequenty cmds about go:\
+	\n\tgo from fat_usb:g console=ttyS0,115200 noinitrd root=/dev/sdb1  rootfstype=ext4 rootwait rw\n",""},
+	{"\n\tgo from nfs server:g console=ttyS0,115200 noinitrd root=/dev/nfs rw nfsroot=192.168.0.10:/home/jc/rootfs_ls2k/,v3 ip=192.168.0.12:192.168.0.10::::eth1\n",""},
+	{"\n\tgo use for SylixOS:g console=ttyS0,115200 console=tty initcall_debug=1 loglevel=20\n",""},
+	{"\n\tgo from flash: g console=ttyS0,115200 noinitrd root=/dev/sda2  rootfstype=ext4 rootwait rw\n",""},
 	{0}
 };
 

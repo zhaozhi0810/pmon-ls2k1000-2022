@@ -448,15 +448,16 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
     unsigned int x;
     int bus, device, function;
     int isbridge = 0;
-    
-    class = _pci_conf_read(tag, PCI_CLASS_REG);
-    id = _pci_conf_read(tag, PCI_ID_REG);
 
-    if (_pciverbose) {
+	//printf("03-16 dev = %p tag = %#x\n",dev,tag);
+    class = _pci_conf_read(tag, PCI_CLASS_REG);   //读取class寄存器（0x8）,用于区分是桥还是设备
+    id = _pci_conf_read(tag, PCI_ID_REG);  //读出id，包含厂家信息
+
+    if (_pciverbose) {   //打印信息
         int supported;
         char devinfo[256];
         _pci_devinfo(id, class, &supported, devinfo);
-        _pci_tagprintf (tag, "%s\n", devinfo);
+        //_pci_tagprintf (tag, "%s\n", devinfo);
     }
 
     pd = pmalloc(sizeof(struct pci_device));
@@ -465,62 +466,62 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
         return;
     }
 
-    _pci_break_tag (tag, &bus, &device, &function);
-
-    pd->pa.pa_bus = bus;
-    pd->pa.pa_device = device;
-    pd->pa.pa_function = function;
-    pd->pa.pa_tag = tag;
-    pd->pa.pa_id = id;
-    pd->pa.pa_class = class;
-    pd->pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
-    pd->pa.pa_iot = dev->pa.pa_iot;
-    pd->pa.pa_memt = dev->pa.pa_memt;
-    pd->pa.pa_dmat = dev->pa.pa_dmat;
-    pd->parent = dev;
-    pd->pcibus = dev->bridge.secbus;
-    pb = pd->pcibus;
-    _pci_device_insert(dev, pd);
+    _pci_break_tag (tag, &bus, &device, &function);  //把tag分解为bus,device,function
+	//printf("2022-03-16 bus = %d device = %d func = %d\n",bus, device, function);
+    pd->pa.pa_bus = bus;    //结构体初始化，设备所在的总线号
+    pd->pa.pa_device = device;   //设备所在的设备号
+    pd->pa.pa_function = function;   //设备所在的功能号
+    pd->pa.pa_tag = tag;    //tag也一起保存起来
+    pd->pa.pa_id = id;     //id也保存
+    pd->pa.pa_class = class;  //class也保存
+    pd->pa.pa_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;   //使能标志
+    pd->pa.pa_iot = dev->pa.pa_iot;  //指向同一个位置，
+    pd->pa.pa_memt = dev->pa.pa_memt; //指向同一个位置，
+    pd->pa.pa_dmat = dev->pa.pa_dmat; //指向同一个位置，
+    pd->parent = dev;	//父节点
+    pd->pcibus = dev->bridge.secbus;  //指向同一个位置，头节点是指向bus0，
+    pb = pd->pcibus;   //bus指针 ，头节点是指向bus0
+    _pci_device_insert(dev, pd);  //加入到链表中
 
     /*
      * Calculated Interrupt routing
      */
-    _pci_setupIntRouting(pd);
+    _pci_setupIntRouting(pd);   //计算中断路由。。。暂时放一边
 
     /*
      *  Shut off device if we initialize from non reset.
      */
-    stat = _pci_conf_read(tag, PCI_COMMAND_STATUS_REG);
+    stat = _pci_conf_read(tag, PCI_COMMAND_STATUS_REG);  //读命令寄存器（0x4）
     stat &= ~(PCI_COMMAND_MASTER_ENABLE |
           PCI_COMMAND_IO_ENABLE |
-          PCI_COMMAND_MEM_ENABLE);
+          PCI_COMMAND_MEM_ENABLE);    //去掉某些位（bit0,1,2）。
 #ifdef USE_SM502_UART0
     if(device!=14)
     {
 #endif
-        _pci_conf_write(tag, PCI_COMMAND_STATUS_REG, stat);
+        _pci_conf_write(tag, PCI_COMMAND_STATUS_REG, stat);    //写回
 #ifdef USE_SM502_UART0
     }
 #endif
     pd->stat = stat;
 
-    /* do all devices support fast back-to-back */
+    /* do all devices support fast back-to-back */   //以下根据命令寄存器的值进一步初始化，注意设置的是pb
     if ((stat & PCI_STATUS_BACKTOBACK_SUPPORT) == 0) {
-        pb->fast_b2b = 0;  /* no, sorry */
+        pb->fast_b2b = 0;  /* no, sorry */  //连续传输，一个设备不支持，总线就不支持
     }
 
     /* do all devices run at 66 MHz */
     if ((stat & PCI_STATUS_66MHZ_SUPPORT) == 0) {
-        pb->freq66 = 0;   /* no, sorry */
+        pb->freq66 = 0;   /* no, sorry */  //一个设备不支持，总线就不支持
     }
 
     /* find slowest devsel */
     x = stat & PCI_STATUS_DEVSEL_MASK;
     if (x > pb->devsel) {
-        pb->devsel = x;
+        pb->devsel = x;  //x:0表示快速，1表示中等速度，2表示慢速设备
     }
 
-    /* Funny looking code which deals with any 32bit read only cfg... */
+    /* Funny looking code which deals with any 32bit read only cfg... */  //根据寄存器的值，设置结构体
     bparam = _pci_conf_read(tag, (PCI_MINGNT & ~0x3));
     pd->min_gnt = 0xff & (bparam >> ((PCI_MINGNT & 3) * 8));
     bparam = _pci_conf_read(tag, (PCI_MAXLAT & ~0x3));
@@ -543,7 +544,7 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
         }
     }
 
-    /* Map interrupt to interrupt line (software function only) */
+    /* Map interrupt to interrupt line (software function only) */   //读取寄存器中中断相关设置
     bparam = _pci_conf_read(tag, PCI_INTERRUPT_REG);
     bparam &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
     bparam |= ((_pci_getIntRouting(pd) & 0xff) << PCI_INTERRUPT_LINE_SHIFT);
@@ -560,17 +561,19 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
         pcireg_t tmp;
         isbridge = 1;
 
+		//printf("2022-03-15 device is a PCI Bridge\n");
+
         pd->bridge.pribus_num = bus;
 #if 1
-	_pci_nbus = pci_get_busno(pd, _pci_nbus);
+	_pci_nbus = pci_get_busno(pd, _pci_nbus);    //获得pci总线号，这里不是连续的
 	pd->bridge.secbus_num  = _pci_nbus;
 #else
         pd->bridge.secbus_num =  ++_pci_nbus;
 #endif
         /* Set it temperary to same as secondary bus number */
-        pd->bridge.subbus_num =  pd->bridge.secbus_num;
+        pd->bridge.subbus_num =  pd->bridge.secbus_num;  //桥，设置所在的总线号
 
-        tmp = _pci_conf_read(tag, PCI_PRIBUS_1);
+        tmp = _pci_conf_read(tag, PCI_PRIBUS_1);  //设置桥的编号信息
         tmp &= 0xff000000;
         tmp |= pd->bridge.pribus_num;
         tmp |= pd->bridge.secbus_num << 8;
@@ -578,7 +581,7 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
         _pci_conf_write(tag, PCI_PRIBUS_1, tmp);
 
         /* Update sub bus number */
-        for(pcidev = dev; pcidev != NULL; pcidev = pcidev->parent) {
+        for(pcidev = dev; pcidev != NULL; pcidev = pcidev->parent) {    //把自己的总线号更新到父桥的最大总线号
             //printf("pcidev = 0x%x\n", pcidev);
             pcidev->bridge.subbus_num = pd->bridge.secbus_num;
             tmp = _pci_conf_read(pcidev->pa.pa_tag, PCI_PRIBUS_1);
@@ -588,31 +591,31 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
 		    _pci_conf_write(pcidev->pa.pa_tag, PCI_PRIBUS_1, tmp);
         }
 
-        pd->bridge.secbus = pmalloc(sizeof(struct pci_bus));
+        pd->bridge.secbus = pmalloc(sizeof(struct pci_bus));   //新的总线结构体
         if(pd->bridge.secbus == NULL) {
             PRINTF ("pci: can't alloc memory for new pci bus\n");
             return;
         }
-
+		//初始化新的结构体
         pd->bridge.secbus->max_lat = 255;
         pd->bridge.secbus->fast_b2b = 1;
         pd->bridge.secbus->prefetch = 1;
         pd->bridge.secbus->freq66 = 1;
-        pd->bridge.secbus->bandwidth = 4000000;
+        pd->bridge.secbus->bandwidth = 4000000;    //64M
         pd->bridge.secbus->ndev = 1;
         pd->bridge.secbus->bus = pd->bridge.secbus_num;
 
-        _pci_bus_insert(pd->bridge.secbus);
+        _pci_bus_insert(pd->bridge.secbus);   //插入到总线链表末尾
         {
             extern  struct pci_device *_pci_bus[];
             extern int _max_pci_bus;
-            _pci_bus[_max_pci_bus++] = pd;
+            _pci_bus[_max_pci_bus++] = pd;  //数组增加，下标值加1
         }
 
-	set_pcie_port_type(pd);
+		set_pcie_port_type(pd);   //....
 
         /* Scan secondary bus of the bridge */
-        _pci_scan_dev(pd, pd->bridge.secbus_num, 0, initialise);
+        _pci_scan_dev(pd, pd->bridge.secbus_num, 0, initialise);  //开始递归搜索
 
         /*
          * Sum up the address space needed by secondary side of bridge
@@ -691,7 +694,6 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
     //set BAR for this dev
     {
         int skipnext = 0;
-
 #if defined(LOONGSON_2K) || defined(LS7A)
 	/* skip bus 0, device 0, function 0 */
 	if (pd->pa.pa_tag != 0 && !PCI_ISCLASS(class, PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI)) {
@@ -699,29 +701,29 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
 		pcie_write_mrrs(pd);
 	}
 #endif
-
         for (reg = PCI_MAPREG_START; reg < (isbridge ? PCI_MAPREG_PPB_END : PCI_MAPREG_END); reg += 4) {
             struct pci_win *pm;
 
-            if (skipnext) {
+            if (skipnext) {   //对于64位的memspace ，跳过一个寄存器
                 skipnext = 0;
                 continue;
             }
 
-            old = _pci_conf_read(tag, reg);
+            old = _pci_conf_read(tag, reg);  //for循环内，reg不断变化，返回的值也是不同的
             _pci_conf_write(tag, reg, 0xfffffffe);
             mask = _pci_conf_read(tag, reg);
-            _pci_conf_write(tag, reg, old);
+            _pci_conf_write(tag, reg, old);   //返回的mask用来判断分配什么类型空间。
 
+			//有些寄存器mask为0，表示不需要分配，直接跳过
             if (mask == 0 || mask == 0xffffffff) {
                 continue;
             }
-
-            if (_pciverbose >= 3) {
+			
+            /*if (_pciverbose >= 3) {
                 _pci_tagprintf (tag, "reg 0x%x = 0x%x\n", reg, mask);
-            }
+            }*/
 
-            if (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_IO) {
+            if (PCI_MAPREG_TYPE(mask) == PCI_MAPREG_TYPE_IO) {   //最低位为1，表示io空间
                 //for IO bar, device is free to hardwire high 16 bits to zero, here we mask high 16 bits to all 1
                 //for convenience of size calculation
                 mask |= 0xffff0000;
@@ -732,24 +734,26 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
                 }
 
                 pm->device = pd;
-                pm->reg = reg;
+                pm->reg = reg;   //起始地址？
                 pm->flags = PCI_MAPREG_TYPE_IO;
                 pm->size = -(PCI_MAPREG_IO_ADDR(mask));
                 pm->align = pm->size;
                 _insertsort_window(&pd->parent->bridge.iospace, pm);
+				//printf("03-16 iospace size = 0x%x reg = 0x%x\n",pm->size,reg);
             }
-            else {
+            else {   //内存空间
                 switch (PCI_MAPREG_MEM_TYPE(mask)) {
                 case PCI_MAPREG_MEM_TYPE_32BIT:
                 case PCI_MAPREG_MEM_TYPE_32BIT_1M:
                     break;
                 case PCI_MAPREG_MEM_TYPE_64BIT:
                     _pci_conf_write(tag, reg + 4, 0x0);
-                    skipnext = 1;
+					//printf("03-16 PCI_MAPREG_MEM_TYPE_64BIT\n");
+                    skipnext = 1;  //两个32位当一个，接下的那个32位也用了
                     break;
                 default:
-                    _pci_tagprintf (tag, "reserved mapping type 0x%x\n",
-                          PCI_MAPREG_MEM_TYPE(mask));
+                    /*_pci_tagprintf (tag, "reserved mapping type 0x%x\n",
+                          PCI_MAPREG_MEM_TYPE(mask));*/
                     continue;
                 }
 
@@ -768,11 +772,13 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
                 pm->flags = PCI_MAPREG_MEM_TYPE_32BIT;
                 pm->size = -(PCI_MAPREG_MEM_ADDR(mask));
                 pm->align = pm->size;
-                _insertsort_window(&pd->parent->bridge.memspace, pm);
+                _insertsort_window(&pd->parent->bridge.memspace, pm);  //插入到有序的链表中
+				//printf("03-16 memspace size = 0x%x reg = 0x%x\n",pm->size,reg);
             }
         }
 
-        {
+		//printf("03-16 end for\n");
+		{  //扩展存储空间，一般没有使用到。
             /* Finally check for Expansion ROM */
             reg = isbridge ? PCI_MAPREG_PPB_ROM : PCI_MAPREG_ROM;
             old = _pci_conf_read(tag, reg);
@@ -780,9 +786,10 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
             mask = _pci_conf_read(tag, reg);
             _pci_conf_write(tag, reg, old);
 
+			//printf("03-16-2 reg 0x%x = 0x%x\n", reg, mask);
             if (mask != 0 && mask != 0xffffffff) {
                 struct pci_win *pm;
-
+				
                 if (_pciverbose >= 3) {
                     _pci_tagprintf (tag, "reg 0x%x = 0x%x\n", reg, mask);
                 }
@@ -795,8 +802,8 @@ _pci_query_dev_func (struct pci_device *dev, pcitag_t tag, int initialise)
                 pm->device = pd;
                 pm->reg = reg;
                 pm->size = -(PCI_MAPREG_ROM_ADDR(mask));
-                            pm->align = pm->size;
-                _insertsort_window(&pd->parent->bridge.memspace, pm);
+                pm->align = pm->size;   //记录了空间的大小
+                _insertsort_window(&pd->parent->bridge.memspace, pm);   //插入到有序的链表中
             }
         }
     }
@@ -856,15 +863,15 @@ _pci_query_dev (struct pci_device *dev, int bus, int device, int initialise)
 	if (!_pci_canscan (tag))
 		return;
 
-	if (_pciverbose >= 2)
-		_pci_bdfprintf (bus, device, -1, "probe...");
+	/*if (_pciverbose >= 2)
+		_pci_bdfprintf (bus, device, -1, "probe...");*/
 #if defined(LOONGSON_2G5536)||defined(LOONGSON_2G1A) || defined(LOONGSON_2F1A) || defined(LOONGSON_2K)
-	id = _pci_conf_read(tag, PCI_ID_REG);
+	id = _pci_conf_read(tag, PCI_ID_REG);   //读id寄存器
 
-	if (_pciverbose >= 2) {
-		PRINTF ("completed\n");
-	}
-#else
+	/*if (_pciverbose >= 2) {
+		PRINTF ("2222completed\n");   //打印这里
+	}*/
+#else  //else 不执行
 #ifdef CONFIG_LSI_9260
 	if ((bus == 2 && device == 0) ||(bus == 3 && device == 0) ||
 			(bus == 4 && device == 0))
@@ -889,25 +896,25 @@ _pci_query_dev (struct pci_device *dev, int bus, int device, int initialise)
                 printf("AST2050's VGA discover !!!!!!!!!!!!!!\n");
         }
 #endif
-#endif
-	if (id == 0 || id == 0xffffffff) {
+#endif    //else 不执行
+	if (id == 0 || id == 0xffffffff) {    //没有读到id就返回了。说明没有挂载设备
 		return;
 	}
-	misc = _pci_conf_read(tag, PCI_BHLC_REG);
+	misc = _pci_conf_read(tag, PCI_BHLC_REG);   //读misc寄存器（地址0xc）
 
-	if (PCI_HDRTYPE_MULTIFN(misc)) {
+	if (PCI_HDRTYPE_MULTIFN(misc)) {   //根据读取的值判断是否为多功能设备
 		int function;
-		for (function = 0; function < 8; function++) {
+		for (function = 0; function < 8; function++) {   //从0开始枚举
 			tag = _pci_make_tag(bus, device, function);
 			id = _pci_conf_read(tag, PCI_ID_REG);
 			if (id == 0 || id == 0xffffffff) {
 				//return;
 				continue;
 			}
-			_pci_query_dev_func (dev, tag, initialise);
+			_pci_query_dev_func (dev, tag, initialise);   //初始化结构体，并加入到列表中
 		}
 	}
-	else {
+	else {   //不是多功能设备
 		_pci_query_dev_func (dev, tag, initialise);
 	}
 }
@@ -1022,14 +1029,15 @@ _pci_setup_windows (struct pci_device *dev)
 	        pci_bigmem_address += pm->size;
 
 #if 1
-            _pci_tagprintf (pd->pa.pa_tag, 
-                            "not enough PCI mem space (%d requested)\n",
-                            pm->size);
+			/*if (_pciverbose >= 2)  //2022-03-06 添加if
+           		 _pci_tagprintf (pd->pa.pa_tag, 
+           	                 "not enough PCI mem space (%d requested)\n",
+                            pm->size);*/
 #endif
             //continue;
         }
-        if (_pciverbose >= 2)
-            _pci_tagprintf (pd->pa.pa_tag, "mem @%p, reg 0x%x %d bytes\n", pm->address, pm->reg, pm->size);
+        /*if (_pciverbose >= 2)
+            _pci_tagprintf (pd->pa.pa_tag, "mem @%p, reg 0x%x %d bytes\n", pm->address, pm->reg, pm->size);*/
 
     	if (PCI_ISCLASS(pd->pa.pa_class, PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI) && (pm->reg == PCI_MEMBASE_1)) {
 
@@ -1056,8 +1064,9 @@ _pci_setup_windows (struct pci_device *dev)
             _pci_conf_write(pd->pa.pa_tag, pm->reg, base);
         }
     }
+	//end for(pm = )
 
-    /* Program expansion rom address base after normal memory base,
+	/* Program expansion rom address base after normal memory base,
        to keep DEC ethernet chip happy */
     for (pm = dev->bridge.memspace; pm != NULL; pm = next) {
 
@@ -1114,9 +1123,9 @@ _pci_setup_windows (struct pci_device *dev)
 #endif
     	if ((PCI_ISCLASS(pd->pa.pa_class, PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI) && (pm->reg == PCI_MAPREG_PPB_ROM)) || (pm->reg == PCI_MAPREG_ROM)) {
 	    /* expansion rom */
-		    if (_pciverbose >= 2){
+		    /*if (_pciverbose >= 2){
 		        _pci_tagprintf (pd->pa.pa_tag, "exp @%p, %d bytes\n", pm->address, pm->size);
-            }
+            }*/
 	        _pci_conf_write(pd->pa.pa_tag, pm->reg, pm->address | PCI_MAPREG_TYPE_ROM);
         }
 
@@ -1125,7 +1134,8 @@ _pci_setup_windows (struct pci_device *dev)
         pfree(pm);
     }
 
-    
+
+	//end for(pm)    
     for(pm = dev->bridge.iospace; pm != NULL; pm = next) {
 
         pd = pm->device;
@@ -1144,8 +1154,8 @@ _pci_setup_windows (struct pci_device *dev)
 	        pm->address = pci_bigio_address;
 	        pci_bigio_address += pm->size;
         }
-        if (_pciverbose >= 2)
-		    _pci_tagprintf (pd->pa.pa_tag, "i/o @%p, reg 0x%x %d bytes\n", pm->address, pm->reg, pm->size);
+        /*if (_pciverbose >= 2)
+		    _pci_tagprintf (pd->pa.pa_tag, "i/o @%p, reg 0x%x %d bytes\n", pm->address, pm->reg, pm->size);*/
 
 	    if (PCI_ISCLASS(pd->pa.pa_class, PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI) &&
            (pm->reg == PCI_IOBASEL_1)) {
@@ -1172,7 +1182,8 @@ _pci_setup_windows (struct pci_device *dev)
         pfree(pm);
     }
 
-    /* Recursive allocate memory for secondary buses */
+	//end for
+	/* Recursive allocate memory for secondary buses */
     for(pd = dev->bridge.child; pd != NULL; pd = pd->next) {
 	    if (PCI_ISCLASS(pd->pa.pa_class, PCI_CLASS_BRIDGE, PCI_SUBCLASS_BRIDGE_PCI)) {
             _pci_setup_windows(pd);
@@ -1404,12 +1415,14 @@ _pci_scan_dev(struct pci_device *dev, int bus, int device, int initialise)
 static void
 _pci_scan_dev(struct pci_device *dev, int bus, int device, int initialise)
 {
+	//printf("2022-03-15 _pci_scan_dev bus = %d device = %d initialise = %d\n",bus, device, initialise);
 	for(; device < 32; device++) {
 #if defined(LOONGSON_2G1A) || defined(LOONGSON_2F1A)
 		if(device == 9){//the 1a can not enumerate,it is not a common and standard pci device
 			continue;
 		}
 #endif
+		//printf("2022-03-15 _pci_scan_dev bus = %d device = %d initialise = %d\n",bus, device, initialise);
 		_pci_query_dev (dev, bus, device, initialise);
 	}
 }

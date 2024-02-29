@@ -307,6 +307,7 @@ void verify_dtb(void)
 		return;
 	}
 	printf("dtb verify ok!!!\n");
+	printf("Targets/LS2K/dev/load_dtb.c\n");
 	if(!check_mac_ok() || !check_prop_ok("dma-coherent", ls2k_version()) || !check_prop_ok("pci-probe-only", pci_probe_only == 1) || !check_pci_bridge_ok() \
 	|| !check_mem_args(working_fdt)) {
 		u8 buff[DTB_SIZE] = {0};

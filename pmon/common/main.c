@@ -552,6 +552,8 @@ main()
 	}
 
 //#endif	
+	//到这就是没有自动启动，被c中断了。
+	cmd_wdg_feed();   //自动喂狗，2024-0229
 	while(1) {
 #if 0
 		while(1){char c;int i;
@@ -884,6 +886,7 @@ dbginit (char *adr)
 	printf ("]\nVersion: %s.\n", vers);
 	printf ("Supported loaders [%s]\n", getExecString());
 	printf ("Supported filesystems [%s]\n", getFSString());
+	printf ("Build date[%s %s]\n", __DATE__, __TIME__);
 	printf ("This software may be redistributed under the BSD copyright.\n");
 
 		

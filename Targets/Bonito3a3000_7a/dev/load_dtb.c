@@ -100,6 +100,7 @@ printf("working_fdt=%p\n", working_fdt);
 		return;
 	}
 	printf("dtb verify ok!!!\n");
+	printf("Targets/Bonito3a3000_7a/dev/load_dtb.c\n");
 	if(!check_mac_ok()) {
 		u8 buff[DTB_SIZE] = {0};
 		fdt_open_into(working_fdt, buff + 4, DTB_SIZE - 8);

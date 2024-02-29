@@ -30,16 +30,13 @@
  * SUCH DAMAGE.
  *
  */
-
 #include <target/bonito.h>
-
 #ifdef SBD_DEBUG
 #define SBD_DISPLAY(text, code)		/* No display function */
 #else
 void hexserial __P((int));
 #define SBD_DISPLAY(text, code)	tgt_display(text, code)
 #endif
-
 /*
  *  Name of envvar that has to be set to enable expert mode.
  */
@@ -67,7 +64,7 @@ extern int mtd_rescan(char *,char *);
 #include "nand.h"
 #if NNAND
 #define TGT_DEFENV  {"mtdparts","nand-flash:10M@0(kernel)ro,-(rootfs)",0,&mtd_rescan},   \
-                    {"bootdelay","3",0,0}
+                    {"bootdelay","0",0,0}
 #else
-#define TGT_DEFENV  {"bootdelay","3",0,0}
+#define TGT_DEFENV  {"bootdelay","0",0,0}
 #endif

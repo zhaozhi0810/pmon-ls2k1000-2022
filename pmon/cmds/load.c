@@ -89,9 +89,9 @@ const Optdesc         cmd_nload_opts[] =
 	{"-r", "load raw file"},
 	{"path", "path and filename"},
     {"\n Most frequenty cmds about load:\
-	\n\tload from fat_usb:load /dev/fat/usb0/vmlinuxboot\
-	\n\tload from tftp server:load tftp://10.2.5.22/vmlinux",""},
-	{"\n\tupdate bios: load -r -f 0xbfc00000 tftp://10.2.5.22/gzrom.bin\n",""},
+	\n\tload from fat_usb:load /dev/fat/usb0/vmlinuz\
+	\n\tload from tftp server:load tftp://192.168.0.10/vmlinuz"," (default use syn1)"},
+	{"\n\tupdate bios: load -r -f 0xbfc00000 tftp://192.168.0.10/gzrom-dtb.bin\n","(default use syn1)"},
 	{0}
 };
 
@@ -100,6 +100,10 @@ const Optdesc         cmd_nload_opts[] =
 unsigned long long dl_loffset;
 char *dl_Oloadbuffer;
 unsigned long elf_address;
+
+
+extern void sk21101_setphy_reset(void);
+
 
 unsigned long long strtoull(const char *nptr,char **endptr,int base);
 static int
@@ -222,7 +226,8 @@ nload (argc, argv)
 
 	dl_initialise (offset, flags);
 
-	fprintf (stderr, "Loading file11111111111111111: %s ", path);
+	fprintf (stderr, "Loading file111111111-2024-01-05: %s ", path);
+	sk21101_setphy_reset();   //2024-01-15 reset phy
 	errno = 0;
 	n = 0;
 
