@@ -51,10 +51,10 @@
 static int	envinited = 0;
 
 static struct stdenv {
-    char           *name;
-    char           *init;
-    char           *values;
-    int		   (*chgfunc) __P((char *, char *));
+    char           *name;   //环境变量的名称
+    char           *init;   //初始化的值
+    char           *values;  //所有可用的值
+    int		   (*chgfunc) __P((char *, char *));  //修改该环境变量的对应函数指针，
 } stdenvtab[] = {
     {"brkcmd", "l -r @cpc 1", 0},
 #ifdef HAVE_QUAD
@@ -140,42 +140,43 @@ _setenv (name, value)
     const struct stdenv *sp;
 
     if ((sp = getstdenv (name)) != 0) { //使用名字查询，是否在标准环境变量表中，不存在返回0
-	if (sp-> chgfunc && !(*sp->chgfunc) (name, value)) //如果在标准表中，看这个是否又对应的函数，有则调用该函数
-	    return 0;
-	if (sp->values && _matchval (sp, value) < 0 && envinited) {//如果存在，则看原来的值是不是不存在
-	    printf ("%s: bad %s value, try [%s]\n", value, name, sp->values);  //不存在则返回0
-	    return 0;
-	}
+		if (sp-> chgfunc && !(*sp->chgfunc) (name, value)) //如果在标准表中，看这个是否又对应的修改函数，有则调用该修改函数
+		    return 0;
+		//如果标准环境变量表中存在值，且没有对应的修改函数，则看原来的值与value是不是相等，相等返回1，否则0，envinited为表示第一次初始化，否则为修改
+		if (sp->values && _matchval (sp, value) < 0 && envinited) {
+		    printf ("%s: bad %s value, try [%s]\n", value, name, sp->values);  //不相等则提示使用原来的默认值，而提示新的值是bad
+		    return 0;
+		}
     }
 
-    for (ep = envvar; ep < &envvar[NVAR]; ep++) {  //在环境变量数组中找
-	if (!ep->name && !bp)
-	  bp = ep;
-	else if (ep->name && striequ (name, ep->name))  //有相同的就退出循环
-	  break;
+    for (ep = envvar; ep < &envvar[NVAR]; ep++) {  //在环境变量数组中找，最多64个环境变量
+		if (!ep->name && !bp)  //数组中，环境变量名为空的，并且bp指针也是空的，就是找到一个空位了
+		  bp = ep;
+		else if (ep->name && striequ (name, ep->name))  //有相同的就退出循环
+		  break;
     }
     
     if (ep < &envvar[NVAR]) {   //有相同的，是break出的循环
-	/* must have got a match, free old value */
-	if (ep->value) {
-	    free (ep->value); ep->value = 0;  //释放原来的空间
-	}
+		/* must have got a match, free old value */
+		if (ep->value) {
+		    free (ep->value); ep->value = 0;  //释放原来的空间
+		}
     } else if (bp) { //没有相同的，存在有envvar数组中第一个空白的位置
-	/* new entry */
-	ep = bp;
-	if (!(ep->name = malloc (strlen (name) + 1)))  //分配空间
-	  return 0;
-	strcpy (ep->name, name);  //数据拷贝到空间中
+		/* new entry */
+		ep = bp;
+		if (!(ep->name = malloc (strlen (name) + 1)))  //分配空间
+		  return 0;
+		strcpy (ep->name, name);  //数据拷贝到空间中
     } else {  //envvar数组中没有找到空白的位置，已经填满了
-	return 0;
+		return 0;
     }
 
     if (value) { //value存在
-	if (!(ep->value = malloc (strlen (value) + 1))) {  //分配空间
-	    free (ep->name); ep->name = 0;
-	    return 0;
-	}
-	strcpy (ep->value, value);  
+		if (!(ep->value = malloc (strlen (value) + 1))) {  //分配空间
+		    free (ep->name); ep->name = 0;
+		    return 0;
+		}
+		strcpy (ep->value, value);  
     }
 
     return 1;

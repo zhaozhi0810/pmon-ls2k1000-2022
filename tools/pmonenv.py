@@ -5,6 +5,8 @@ python ../tools/pmonenv.py -f gzrom-dtb.bin -d ls2k.dtb -w  al=/dev/ram@p0x11000
 import struct
 import sys
 import getopt
+import os
+
 def readenv(fname,foff,fsz,argv):
 	f=open(fname,'rb+')  
 	f.seek(foff,0) 
@@ -43,13 +45,20 @@ def writeenv(fname,foff,fsz,d):
 	for i in d.keys():   
 		a += i+b'='+d[i]+b'\x00' 
 		# print("8 a = ",a)   # 9
-	a=a.ljust(fsz,b'\x00')   
-    
+	a=a.ljust(fsz,b'\x00')    # full ff
 	b = struct.pack('!H',(-sum(struct.unpack('!'+str(len(a)//2)+'H',a)))&0xffff)
 	# print("9 b = ",b)   # 10
 	a=b+a[2:]
 	# print("10 a = ",a)   # 11
 	f=open(fname,'rb+')
+
+	size=os.path.getsize(fname)
+	print("size=",size)
+	c = ""
+	c=c.ljust(foff-size-0x4000,'\xff') # full ff
+	f.seek(size, 0) # full ff
+	f.write(c)
+
 	f.seek(foff,0)
 	f.write(a)  
 	f.close()
@@ -70,7 +79,7 @@ def writedtb(fname,dtb,foff):
 	a=f.read();
 	# print("a.len= ",len(a))  # 12
 	f.close()
-	a=a.ljust(0x4000-8,'\x00')
+	a=a.ljust(0x4000-8,'\xff')
 	# print("a = ",a)
 	b = struct.pack('I',(-sum(struct.unpack(''+str(len(a)//4)+'I',a)))&0xffffffff)
 	a=b+a+b
@@ -89,6 +98,10 @@ if __name__ == '__main__':
 	fsz = int(opt['-s'],0) if '-s' in opt else 500  
 	fname = opt['-f'] if '-f' in opt else 'gzrom.bin' 
     
+	print(foff)
+	print(fsz)
+	print(fname)
+
 	d=readenv(fname,foff,fsz,argv)
 	print(d) 
 	if '-w' in opt:  

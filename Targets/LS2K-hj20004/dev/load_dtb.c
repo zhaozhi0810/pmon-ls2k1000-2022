@@ -248,8 +248,14 @@ static int update_mac(void * ssp, int id)
 		memcpy( mac_addr, nodep, 6);
 	}
 #else
+
+
+#if 0  //2024-03-04
 	i2c_init();//configure the i2c freq
 	mac_read(id * 6, mac_addr, 6);
+#endif
+	memcpy( mac_addr, nodep, 6);  //2024-03-04
+
 #endif
 	len = 6;
 	if(fdt_setprop(ssp, nodeoffset, "mac-address", mac_addr, len)) {

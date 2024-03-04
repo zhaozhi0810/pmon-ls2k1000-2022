@@ -1108,16 +1108,16 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 		while (*ep != 0) {
 			char *val = 0, *p = env;
 			i = 0;
-			while ((*p++ = *ep++) && (ep <= nvram + NVRAM_SIZE - 1)
-			       && i++ < 255) {
+			while ((*p++ = *ep++) && (ep <= nvram + NVRAM_SIZE - 1) && i++ < 255) {    //2024-03-04
 				if ((*(p - 1) == '=') && (val == NULL)) {
 					*(p - 1) = '\0';
 					val = p;
 				}
 			}
-			if (ep <= nvram + NVRAM_SIZE - 1 && i < 255) {
+			//i是每个变量的值不能超过的长度，不能超过255
+			if (ep <= nvram + NVRAM_SIZE - 1 && i < 255) {  //2024-03-04
 				(*func) (env, val);
-			//	printf("2022-03-03 : env = %s val = %s ep = %x i = %d\n", env, val,ep,i);
+				//printf("2024-03-04 : env = %s val = %s ep = %x i = %d\n", env, val,ep,i);
 			} else {
 				nvram_invalid = 2;
 			//	printf("2022-03-03 : nvram_invalid ep = %x i = %d\n", ep,i);
@@ -1139,15 +1139,15 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 		bcopy(&nvram[ACTIVECOM_OFFS], &activecom, 1);
 	else
 		activecom = 3 /*1 */ ;
-	sprintf(env, "0x%02x", activecom);
-	(*func) ("activecom", env);	/*tangyt */
+	sprintf(env, "0x%02x", activecom);      
+	(*func) ("activecom", env);	/*tangyt */    //1.设置环境变量activecom
 
 	if (!nvram_invalid)
 		bcopy(&nvram[MASTER_BRIDGE_OFFS], &em_enable, 1);
 	else
 		em_enable = 3 /*1 */ ;
 	sprintf(env, "0x%02x", em_enable);
-	(*func) ("em_enable", env);	/*tangyt */
+	(*func) ("em_enable", env);	/*tangyt */      //2.设置环境变量em_enable
 
 	printf("activecom = %d.   em_enable = %d.\n", activecom, em_enable);
 #endif
@@ -1156,10 +1156,10 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 	 *  six bytes of nvram storage. Set environment to it.
 	 */
 
-	bcopy(&nvram[ETHER_OFFS], hwethadr, 6);
+	bcopy(&nvram[ETHER_OFFS], hwethadr, 6);  //ETHER_OFFS = 494，最后6个字节可以设置mac地址，实际是0
 	sprintf(env, "%02x:%02x:%02x:%02x:%02x:%02x", hwethadr[0], hwethadr[1],
 		hwethadr[2], hwethadr[3], hwethadr[4], hwethadr[5]);
-	(*func) ("ethaddr", env);
+	(*func) ("ethaddr", env);    //3. 设置环境变量ethaddr
 
 #ifndef NVRAM_IN_FLASH
 	free(nvram);
@@ -1170,18 +1170,18 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 #endif
 
 	sprintf(env, "%d", memorysize / (1024 * 1024));
-	(*func) ("memsize", env);
+	(*func) ("memsize", env);     //4. 设置环境变量memsize
 
 	sprintf(env, "%d", memorysize_high / (1024 * 1024));
-	(*func) ("highmemsize", env);
+	(*func) ("highmemsize", env);   //5.0设置环境变量highmemsize
 
 	sprintf(env, "%d", md_pipefreq);
-	(*func) ("cpuclock", env);
+	(*func) ("cpuclock", env);      //6.设置环境变量 cpuclock
 
 	sprintf(env, "%d", md_cpufreq);
-	(*func) ("busclock", env);
+	(*func) ("busclock", env);      //7.设置环境变量 busclock
 
-	(*func) ("systype", SYSTYPE);
+	(*func) ("systype", SYSTYPE);   //8.设置环境变量 systype  
 
 }
 
@@ -1545,7 +1545,7 @@ int tgt_setenv(char *name, char *value)
 
 	/* If NVRAM is found to be uninitialized, reinit it. */
 	if (nvram_invalid) {  //0 表示已经初始化了
-		printf("2022-03-08 tgt_setenv nvram_invalid\n");
+		printf("2024-03-04 tgt_setenv nvram_invalid\n");
 		nvramsecbuf = (char *)malloc(NVRAM_SECSIZE);
 		if (nvramsecbuf == 0) {
 			printf("Warning! Unable to malloc nvrambuffer!\n");

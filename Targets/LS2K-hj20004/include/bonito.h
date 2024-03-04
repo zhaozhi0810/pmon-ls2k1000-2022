@@ -70,7 +70,7 @@ struct pci_config_data {
 /*nvram define                                                       */
 /*********************************************************************/
 #ifdef NVRAM_IN_FLASH
-#	define	NVRAM_SIZE		492    /*modified by tangyt*/
+#	define	NVRAM_SIZE		500    /*modified by dazhi  492-->500*/
 #	define	NVRAM_SECSIZE		500
 #       define  ACTIVECOM_OFFS      492 /*added by tangyt*/
 #       define  MASTER_BRIDGE_OFFS      493 /*added by tangyt*/

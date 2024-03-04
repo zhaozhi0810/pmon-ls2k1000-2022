@@ -526,8 +526,10 @@ main()
 				/* modify by lifeng */
 				/*setenv("al1","/dev/fs/ext2@wd0/boot/vmlinux");*/
 				/*setenv("append","console=tty root=/dev/sda1");*/
-				setenv("al1","/dev/fs/ext2@wd0/vmlinux");
-				setenv("append","console=ttyS0,115200 root=/dev/sda2 rw quiet splash autoplug=off loglevel=7");
+				//setenv("al1","/dev/fs/ext2@wd0/vmlinux");
+				//setenv("append","console=ttyS0,115200 root=/dev/sda2 rw quiet splash autoplug=off loglevel=7");
+				setenv("al1","(wd0,0)/vmlinuz");
+				setenv("append","console=ttyS0,115200 noinitrd root=/dev/sda2  rootfstype=ext4 rootwait rw");
 			}
 
 			//autoload("/dev/fs/ext2@wd0/boot/vmlinux");
