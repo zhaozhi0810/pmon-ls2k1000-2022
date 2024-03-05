@@ -174,8 +174,8 @@ ConfigEntry ConfigTable[] = {
 };
 
 int afxIsReturnToPmon = 0;
-unsigned char activecom = 0x3;
-unsigned char em_enable = 0x3;
+unsigned char activecom = 0x0;   //modify 3-->0 by dazhi 20240305
+unsigned char em_enable = 0x0;  //modify 3-->0 by dazhi 20240305
 unsigned long _filebase;
 
 extern unsigned long long memorysize;
@@ -1129,12 +1129,13 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 
 	printf("NVRAM@%x\n", (u_int32_t) nvram);
 #ifdef NVRAM_IN_FLASH
-	printf("ACTIVECOM_OFFS = %d, = 0x%x\n", ACTIVECOM_OFFS, ACTIVECOM_OFFS);
-	printf("MASTER_BRIDGE_OFFS = %d, = 0x%x\n", MASTER_BRIDGE_OFFS,
-	       MASTER_BRIDGE_OFFS);
-	printf("before :activecom = %d. em_enable = %d\n", activecom,
-	       em_enable);
+	//printf("ACTIVECOM_OFFS = %d, = 0x%x\n", ACTIVECOM_OFFS, ACTIVECOM_OFFS);
+	//printf("MASTER_BRIDGE_OFFS = %d, = 0x%x\n", MASTER_BRIDGE_OFFS,
+	//       MASTER_BRIDGE_OFFS);
+	//printf("before :activecom = %d. em_enable = %d\n", activecom,
+	//      em_enable);
 //      printf("nuram[MASTER_BRIDGE_OFFS] = %d.\n" nvram[MASTER_BRIDGE_OFFS]);
+#if 0  //delete by dazhi 2024-0305,no used!!!
 	if (!nvram_invalid)
 		bcopy(&nvram[ACTIVECOM_OFFS], &activecom, 1);
 	else
@@ -1148,8 +1149,8 @@ void tgt_mapenv(int (*func) __P((char *, char *)))  //参数名注意一下，�
 		em_enable = 3 /*1 */ ;
 	sprintf(env, "0x%02x", em_enable);
 	(*func) ("em_enable", env);	/*tangyt */      //2.设置环境变量em_enable
-
-	printf("activecom = %d.   em_enable = %d.\n", activecom, em_enable);
+#endif
+	//printf("activecom = %d.   em_enable = %d.\n", activecom, em_enable);
 #endif
 	/*
 	 *  Ethernet address for Galileo ethernet is stored in the last
@@ -1429,6 +1430,7 @@ static int tgt_setenv_inmem(const char* name,const char* value,int envlen,char *
 	char *ep = nvrambuf + 2;
 	char *np,*sp;
 
+	//首先判断原来里面有没有，如果有则要删除原来的，如果没有，则直接找到末尾。
 	while ((*ep != '\0') && (ep <= nvrambuf + NVRAM_SIZE)) {
 		np = name;
 		sp = ep;
@@ -1437,10 +1439,10 @@ static int tgt_setenv_inmem(const char* name,const char* value,int envlen,char *
 			ep++;
 			np++;
 		}
-		if ((*np == '\0') && ((*ep == '\0') || (*ep == '='))) {
-			while (*ep++) ;
-			while (ep <= nvrambuf + NVRAM_SIZE) {
-				*sp++ = *ep++;   //把后面的数据移过来
+		if ((*np == '\0') && ((*ep == '\0') || (*ep == '='))) {   //找到了相同的名字
+			while (*ep++) ;  //一直找到\0
+			while (ep <= nvrambuf + NVRAM_SIZE) {  //把ep后面的数据移过来
+				*sp++ = *ep++;   
 			}
 			if (nvrambuf[2] == '\0') {   //全部删除完了，没得数据了
 				nvrambuf[3] = '\0';    //连续两个0
@@ -1448,19 +1450,22 @@ static int tgt_setenv_inmem(const char* name,const char* value,int envlen,char *
 		//	cksum(nvrambuf, NVRAM_SIZE, 1);  //算出校验和，填充		
 			break;
 		} else if (*ep != '\0') {   //不等于0，就表示前面没找到相同的
-			while (*ep++ != '\0') ;
+			while (*ep++ != '\0') ;  //继续往后找
 		}
 	}
 
-	//把数据加进去
+	
+	//把新的数据加进去
  	{  //不是"ethaddr"
+ 		
 		ep = nvrambuf + 2;
 		if (*ep != '\0') {    //指针向后移动
 			do {
 				while (*ep++ != '\0') ;
 			} while (*ep++ != '\0');
 			ep--;
-		}
+		}//一直移到文件末尾，标识是有两个\0
+		
 		if (((int)ep + NVRAM_SIZE - (int)ep) < (envlen + 1)) {  //是否越界
 			//free(nvramsecbuf);   //不再修改flash
 			return (0);	/* Bummer! */
@@ -1540,21 +1545,21 @@ int tgt_setenv(char *name, char *value)
 	nvram = (char *)(tgt_flashmap())->fl_map_base;    //0xbfc00000
 
 	/* Deal with an entire sector even if we only use part of it */
-	nvram += NVRAM_OFFS & ~(NVRAM_SECSIZE - 1);   //0xbfcff000
+	nvram += NVRAM_OFFS ;//& ~(NVRAM_SECSIZE - 1);   //0xbfcff000
 #endif
 
 	/* If NVRAM is found to be uninitialized, reinit it. */
 	if (nvram_invalid) {  //0 表示已经初始化了
 		printf("2024-03-04 tgt_setenv nvram_invalid\n");
-		nvramsecbuf = (char *)malloc(NVRAM_SECSIZE);
+		nvramsecbuf = (char *)malloc(NVRAM_SECSIZE);   //NVRAM_SECSIZE 500 字节
 		if (nvramsecbuf == 0) {
 			printf("Warning! Unable to malloc nvrambuffer!\n");
 			return (-1);
 		}
 #ifdef NVRAM_IN_FLASH
-		memcpy(nvramsecbuf, nvram, NVRAM_SECSIZE);
+		memcpy(nvramsecbuf, nvram, NVRAM_SECSIZE);  //NVRAM_SECSIZE 500
 #endif
-		nvrambuf = nvramsecbuf + (NVRAM_OFFS & (NVRAM_SECSIZE - 1));
+		nvrambuf = nvramsecbuf + (NVRAM_OFFS & (NVRAM_SECSIZE - 1));  //NVRAM_SECSIZE - 1 = 499 = 0x1f3
 		memset(nvrambuf, -1, NVRAM_SIZE);
 		nvrambuf[2] = '\0';
 		nvrambuf[3] = '\0';
@@ -1584,7 +1589,7 @@ int tgt_setenv(char *name, char *value)
 
 #else
 		nvram_put(nvramsecbuf);
-#endif
+#endif  //NVRAM_IN_FLASH
 		nvram_invalid = 0;
 		free(nvramsecbuf);
 	}
@@ -1601,18 +1606,24 @@ int tgt_setenv(char *name, char *value)
 #ifndef NVRAM_IN_FLASH
 	nvram_get(nvramsecbuf);  
 #else
-	memcpy(nvramsecbuf, nvram, NVRAM_SECSIZE); //把数据都回来
+	memcpy(nvramsecbuf, nvram, NVRAM_SECSIZE); //把数据读回来，500 字节
 #endif
-	nvrambuf = nvramsecbuf + (NVRAM_OFFS & (NVRAM_SECSIZE - 1));
+	nvrambuf = nvramsecbuf;// + (NVRAM_OFFS & (NVRAM_SECSIZE - 1));
 	//printf("2022-03-08 nvrambuf = %p nvramsecbuf = %p\n",nvrambuf,nvramsecbuf);
 	/* Etheraddr is special case to save space */		
 #if 1				/*added by tangyt */
-	if (strcmp("activecom", name) == 0) {
+	if (strcmp("activecom", name) == 0) {   //实际没啥用
 		activecom = strtoul(value, 0, 0);
 		printf("set activecom to com %d\n", activecom);
-	} else if (strcmp("em_enable", name) == 0) {
+#ifdef NVRAM_IN_FLASH   //，用这里
+		bcopy(&activecom, &nvrambuf[ACTIVECOM_OFFS], 1);   //这里不包括checksum? 有问题
+#endif		
+	} else if (strcmp("em_enable", name) == 0) {     //实际没啥用
 		em_enable = strtoul(value, 0, 0);
 		printf("set em_enable to com %d\n", em_enable);
+#ifdef NVRAM_IN_FLASH
+		bcopy(&em_enable, &nvrambuf[MASTER_BRIDGE_OFFS], 1);
+#endif
 	} else
 #endif
 	if (strcmp("ethaddr", name) == 0) {   //如果名字是"ethaddr"
@@ -1624,42 +1635,51 @@ int tgt_setenv(char *name, char *value)
 			hwethadr[i] = v;
 			s += 3;	/* Don't get to fancy here :-) */
 		}
+#ifdef NVRAM_IN_FLASH
+		bcopy(hwethadr, &nvramsecbuf[ETHER_OFFS], 6);   //，用这里
+#endif		
 	}
-	else {  //不是"ethaddr"   //修改的部分！！！！2022-03-08
+	else {  //修改的部分！！！！2022-03-08
 		if(0 == tgt_setenv_inmem(name,value,envlen,nvrambuf))
 		{
 			printf("tgt_setenv_inmem return 0\n");
 			return 0;
 		}
 	}
-	//cksum(nvrambuf, NVRAM_SIZE, 1);
-#ifdef NVRAM_IN_FLASH
-	bcopy(&activecom, &nvrambuf[ACTIVECOM_OFFS], 1);   //这里不包括checksum? 有问题
-	bcopy(&em_enable, &nvrambuf[MASTER_BRIDGE_OFFS], 1);
-#endif
-	bcopy(hwethadr, &nvramsecbuf[ETHER_OFFS], 6);
+	//原来是activecom，em_enable，hwethadr 不参与校验和计算，现在都参加计算（2024-03-05）
+	
 #ifdef NVRAM_IN_FLASH
 
 #ifdef BOOT_FROM_NAND
-
+	没有使用，2024-0305
 	memcpy(nvram, nvramsecbuf, NVRAM_SECSIZE);
 	//update_env_to_nand( nvram, nvramsecbuf,NVRAM_SECSIZE);
 	update_rom_to_nand_1block(nvram, (char *)(tgt_flashmap())->fl_map_base);
 #else
-
-	if (fl_erase_device(nvram, NVRAM_SECSIZE, FALSE)) {
-		printf("Error! Nvram erase failed!\n");
+	//用这个，2024-0305，正好是4k，直接擦除，重写就好了。
+	if(bcmp(nvram,nvramsecbuf,NVRAM_SECSIZE) == 0)  //等于0表示相同
+	{
+		printf("The data has not been modified 2024-0305\n");
 		free(nvramsecbuf);
-		return (0);
+		return;
 	}
-	if (fl_program_device(nvram, nvramsecbuf, NVRAM_SECSIZE, FALSE)) {
-		printf("Error! Nvram program failed!\n");
-		free(nvramsecbuf);
-		return (0);
+	else
+	{
+		if (fl_erase_device(nvram, NVRAM_SECSIZE, FALSE)) {
+			printf("Error! Nvram erase failed!\n");
+			free(nvramsecbuf);
+			return (0);
+		}
+		if (fl_program_device(nvram, nvramsecbuf, NVRAM_SECSIZE, FALSE)) {
+			printf("Error! Nvram program failed!\n");
+			free(nvramsecbuf);
+			return (0);
+		}
 	}
-#endif
+#endif //BOOT_FROM_NAND
 
 #else  // ifdef NVRAM_IN_FLASH 不执行
+	不执行，2024-0305
 	nvram_put(nvramsecbuf);
 #endif
 	free(nvramsecbuf);

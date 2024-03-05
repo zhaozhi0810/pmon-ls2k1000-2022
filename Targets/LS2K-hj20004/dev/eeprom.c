@@ -211,13 +211,15 @@ int ls2k_eeprom_read_seq(unsigned char data_addr, unsigned char *buf, int count)
 	return i;
 }
 
+//0表示返回的是随机值，而不是从iic读取的值，>0 表示读取了iic的有效值
 int mac_read(unsigned char data_addr, unsigned char *buf, int count)
 {
 	int i;
+	int ret = 0;   
 
 	i = ls2k_eeprom_read_seq(data_addr, buf, count);
 
-	if (!i) {
+	if (!i) {    //没有读成功
 		printf("get random MAC address: ");
 		generate_mac_val(buf);
 
@@ -225,14 +227,16 @@ int mac_read(unsigned char data_addr, unsigned char *buf, int count)
 			printf("%02x%s", buf[i], (i == (count - 1))? "":":");
 		printf("\n");
 
-		return i;
+		return ret;
 	}
 
-	if (!is_valid_ether_addr_linux(buf)){
+	//读成功了
+	if (!is_valid_ether_addr_linux(buf)){  //但不是有效值
 		printf("Mac is invalid, now get a random mac\n");
 		generate_mac_val(buf);
+		return	ret;
 	}
-	return i;
+	return i;  //读成功了
 }
 
 int mac_write(unsigned char data_addr, unsigned char *buf, int count)

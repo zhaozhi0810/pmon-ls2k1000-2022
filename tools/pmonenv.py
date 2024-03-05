@@ -45,7 +45,8 @@ def writeenv(fname,foff,fsz,d):
 	for i in d.keys():   
 		a += i+b'='+d[i]+b'\x00' 
 		# print("8 a = ",a)   # 9
-	a=a.ljust(fsz,b'\x00')    # full ff
+	a += b'\x00'
+	a=a.ljust(fsz,b'\xff')    # full ff
 	b = struct.pack('!H',(-sum(struct.unpack('!'+str(len(a)//2)+'H',a)))&0xffff)
 	# print("9 b = ",b)   # 10
 	a=b+a[2:]

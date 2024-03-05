@@ -248,14 +248,10 @@ static int update_mac(void * ssp, int id)
 		memcpy( mac_addr, nodep, 6);
 	}
 #else
-
-
-#if 0  //2024-03-04
+  	//2024-03-04
 	i2c_init();//configure the i2c freq
-	mac_read(id * 6, mac_addr, 6);
-#endif
-	memcpy( mac_addr, nodep, 6);  //2024-03-04
-
+	if(mac_read(id * 6, mac_addr, 6) == 0)  //返回0，则使用dts中的值，2024-03-04
+		memcpy( mac_addr, nodep, 6);  //2024-03-04 ，使用dts中的值仍然有问题，就是每个板卡mac还是相同！！！
 #endif
 	len = 6;
 	if(fdt_setprop(ssp, nodeoffset, "mac-address", mac_addr, len)) {

@@ -2843,6 +2843,8 @@ s32  synopGMAC_init_network_interface(char *xname, u64 synopGMACMappedAddr)
     else
         parseenv(1, mac_addr0);
 #endif
+
+
 #elif defined(LOONGSON_2K) || defined(LS7A)
 s32  synopGMAC_init_network_interface(char *xname, u64 synopGMACMappedAddr)
 {
@@ -2875,6 +2877,8 @@ s32  synopGMAC_init_network_interface(char *xname, u64 synopGMACMappedAddr)
 #endif
         
     memcpy(smbios_uuid_mac, mac_addr0, 6);
+
+
 #else
 s32  synopGMAC_init_network_interface(char *xname, struct device * sc )
 {
