@@ -1,6 +1,6 @@
 char ostype[] = "PMON2000";
 char osrelease[] = "3.3";
-char osversion[] = "ls2k#143";
+char osversion[] = "ls2k#145";
 char sccs[8] = { ' ', ' ', ' ', ' ', '@', '(', '#', ')' };
 char vers[] =
-    "PMON2000 3.3 (ls2k) #143: Tue Mar  5 14:28:17 CST 2024 commit 1ca28b2a4297be81c11529c8e07a3c23987e0a6e Author: dazhi <zhaozhi0810@qq.com> Date:   Mon Mar 4 19:24:12 2024 +0800 ";
+    "PMON2000 3.3 (ls2k) #145: Wed Mar  6 14:48:56 CST 2024 commit fa57d6ea5e8957f0d564d3d612cc467ae05574d1 Author: dazhi <zhaozhi0810@qq.com> Date:   Wed Mar 6 08:43:22 2024 +0800 ";

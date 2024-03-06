@@ -41,3 +41,14 @@ make cfg
 
 
 
+
+2024-03-06
+1. pmon 会更新 dtb中的一些数据，比如pci的地址分配，mac地址等。
+	内核改为直接使用自己的dtb的话，我是直接在pmon中把dtb打印出来，然后把pci相关的地址分配写道内核的dts中
+	这样ch368的驱动才能正常加载。
+2. pmon 修改dtb的时候，它的填充值改为了0xff   函数verify_dtb(void) （load_dtb.c） 这样基本满足了不用的空间保持为0xff了。
+3. 根据pmon的代码，修改了一个在Linux下直接烧写pmon的工具。（tools/program-2k1000-pmon 下直接make）
+	目前只在ls2k1000+ gd25q64上测试了
+
+
+

@@ -31,6 +31,10 @@ int dtb_cksum(void *p, size_t s, int set)
 	return (sum);
 }
 
+
+
+//返回0，表示mac_addr 不同，需要重置dtb中的mac_addr
+//否则表示相同，不需要修改dtb文件。
 static int check_mac_ok(void)
 {
 	const void *nodep;	/* property node pointer */
@@ -48,7 +52,13 @@ static int check_mac_ok(void)
 		if(len <= 0) {
 			return 1;	//no mac prop in ethernet, do nothing
 		}
-	
+
+	//2024-03-06
+	//1. 优先eeprom的设置，
+	//2. 如果eeprom没有，则选择pmon-flash中的，
+	//3. 如果pmon-flash中没有，则使用dts中的
+	//4. 如果dts中也没有，则使用随机的（源码中自带）
+		
 #ifdef USE_ENVMAC
 		if (USE_ENVMAC)
 		{
@@ -309,10 +319,11 @@ void verify_dtb(void)
 		return;
 	}
 	printf("dtb verify ok!!!\n");
-	printf("2024-01-15\n");
+
 	if(!check_mac_ok() || !check_prop_ok("dma-coherent", ls2k_version()) || !check_prop_ok("pci-probe-only", pci_probe_only == 1) || !check_pci_bridge_ok() \
 	|| !check_mem_args(working_fdt)) {
-		u8 buff[DTB_SIZE] = {0};
+		u8 buff[DTB_SIZE];
+		memset(buff,0xff,DTB_SIZE);   //20240306 by dazhi
 		fdt_open_into(working_fdt, buff + 4, DTB_SIZE - 8);
 		update_prop_flag(buff + 4, "dma-coherent", ls2k_version());
 		update_prop_flag(buff + 4, "pci-probe-only", pci_probe_only == 1);
